@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int                  @id @default(autoincrement())
+  name              String               @db.VarChar(191)
+  email             String               @unique @db.VarChar(191)
+  provider          String               @default("credentials") @db.VarChar(100)
+  image             String?
+  oauth_id          String?
+  password_hash     String?
+  is_email_verified Boolean              @default(false)
+  created_at        DateTime             @default(now())
+  updated_at        DateTime             @default(now()) @updatedAt
+  customers         Customer[]
+  invoices          Invoice[]
+  products          Product[]
+  payments          Payment[]
+  resets            PasswordResetToken[]
+
+  @@map("users")
+}
+
+model Customer {
+  id         Int       @id @default(autoincrement())
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    Int
+  name       String    @db.VarChar(191)
+  email      String?   @db.VarChar(191)
+  phone      String?   @db.VarChar(40)
+  address    String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  invoices   Invoice[]
+
+  @@index([user_id])
+  @@map("customers")
+}
+
+model Product {
+  id            Int             @id @default(autoincrement())
+  user          User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id       Int
+  name          String          @db.VarChar(191)
+  sku           String          @unique @db.VarChar(100)
+  price         Decimal         @db.Decimal(12, 2)
+  cost          Decimal?        @db.Decimal(12, 2)
+  stock_on_hand Int             @default(0)
+  reorder_level Int             @default(0)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  movements     StockMovement[]
+  invoiceItems  InvoiceItem[]
+
+  @@index([user_id])
+  @@map("products")
+}
+
+model StockMovement {
+  id         Int         @id @default(autoincrement())
+  product    Product     @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  product_id Int
+  change     Int
+  reason     StockReason
+  note       String?
+  created_at DateTime    @default(now())
+
+  @@index([product_id])
+  @@map("stock_movements")
+}
+
+model Invoice {
+  id          Int           @id @default(autoincrement())
+  user        User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id     Int
+  customer    Customer      @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  customer_id Int
+  status      InvoiceStatus @default(DRAFT)
+  issue_date  DateTime      @default(now())
+  due_date    DateTime?
+  subtotal    Decimal       @db.Decimal(12, 2)
+  tax         Decimal       @db.Decimal(12, 2)
+  total       Decimal       @db.Decimal(12, 2)
+  notes       String?
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  items       InvoiceItem[]
+  payments    Payment[]
+
+  @@index([user_id])
+  @@index([customer_id])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id         Int      @id @default(autoincrement())
+  invoice    Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  invoice_id Int
+  product    Product? @relation(fields: [product_id], references: [id])
+  product_id Int?
+  name       String   @db.VarChar(191)
+  quantity   Int
+  unit_price Decimal  @db.Decimal(12, 2)
+  tax_rate   Decimal? @db.Decimal(5, 2)
+  line_total Decimal  @db.Decimal(12, 2)
+
+  @@index([invoice_id])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  user       User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    Int
+  invoice    Invoice       @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  invoice_id Int
+  amount     Decimal       @db.Decimal(12, 2)
+  method     PaymentMethod
+  reference  String?
+  paid_at    DateTime      @default(now())
+  created_at DateTime      @default(now())
+
+  @@index([invoice_id])
+  @@index([user_id])
+  @@map("payments")
+}
+
+model PasswordResetToken {
+  id         Int       @id @default(autoincrement())
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    Int
+  token      String    @unique @db.VarChar(191)
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  @@index([user_id])
+  @@map("password_reset_tokens")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  UPI
+  CHEQUE
+  OTHER
+}
+
+enum StockReason {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  RETURN
+  DAMAGE
+}

@@ -34,51 +34,48 @@ const Register = () => {
 
   return (
     <div>
-      <form action={formAction}>
-        <div className="mt-4">
-          <Label htmlFor="Name">Name</Label>
-          <Input
-            id="Name"
-            name="name"
-            placeholder="Enter Your name"
-            type="text"
-          />
-          <span className="text-red-500">{state.errors?.name}</span>
+      <form action={formAction} className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="name">Full name</Label>
+          <Input id="name" name="name" placeholder="Your name" type="text" />
+          <span className="text-xs text-[#b45309]">{state.errors?.name}</span>
         </div>
-        <div className="mt-4">
-          <Label htmlFor="email">Email</Label>
+        <div className="grid gap-2">
+          <Label htmlFor="email">Work email</Label>
           <Input
             id="email"
             name="email"
-            placeholder="Enter Your Email"
+            placeholder="you@company.com"
             type="email"
           />
-          <span className="text-red-500">{state.errors?.email}</span>
+          <span className="text-xs text-[#b45309]">{state.errors?.email}</span>
         </div>
-        <div className="mt-4">
-          <Label htmlFor="Password">Password</Label>
+        <div className="grid gap-2">
+          <Label htmlFor="password">Password</Label>
           <Input
-            id="Password"
+            id="password"
             name="password"
-            placeholder="Enter Your Password"
+            placeholder="Create a password"
             type="password"
           />
-          <span className="text-red-500">{state.errors?.password}</span>
+          <span className="text-xs text-[#b45309]">
+            {state.errors?.password}
+          </span>
         </div>
-        <div className="mt-4">
-          <Label htmlFor="ConfirmPassword">ConfirmPassword</Label>
+        <div className="grid gap-2">
+          <Label htmlFor="confirm_password">Confirm password</Label>
           <Input
-            id="ConfirmPassword"
-            name="confirmpassword"
-            placeholder="Confirm  Your Password"
+            id="confirm_password"
+            name="confirm_password"
+            placeholder="Repeat your password"
             type="password"
           />
-          <span className="text-red-500">{state.errors?.confirm_password}</span>
+          <span className="text-xs text-[#b45309]">
+            {state.errors?.confirm_password}
+          </span>
         </div>
 
-        <div className="mt-4">
-          <SubmitBtn />
-        </div>
+        <SubmitBtn />
       </form>
 
       <div className="mt-6">
@@ -95,7 +92,7 @@ const Register = () => {
         <Button
           type="button"
           variant="outline"
-          className="mt-4 flex w-full items-center justify-center gap-3 border-[#ecdccf]"
+          className="mt-4 flex w-full items-center justify-center gap-3 border-[#ecdccf] bg-white"
           onClick={handleGoogleSignup}
         >
           <Image

@@ -11,36 +11,65 @@ const Page = async () => {
     redirect("/dashboard");
   }
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f7f3ee] px-6 py-10">
-      <div className="w-full max-w-xl rounded-2xl border border-[#ecdccf] bg-white/90 px-10 py-8 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#f97316] to-[#fb7185]" />
-          <div>
-            <div className="text-2xl font-extrabold text-[#1f1b16]">
-              BillSutra
+    <div className="min-h-screen bg-[#f7f2ea] text-[#1f1b16]">
+      <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col overflow-hidden px-6 py-10 lg:flex-row lg:items-stretch">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute -left-16 top-6 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(15,118,110,0.22),rgba(15,118,110,0))]" />
+          <div className="absolute right-0 top-16 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.25),rgba(249,115,22,0))]" />
+          <div className="absolute bottom-0 left-1/4 h-48 w-48 rounded-full bg-[radial-gradient(circle_at_center,rgba(251,113,133,0.2),rgba(251,113,133,0))]" />
+        </div>
+
+        <div className="flex flex-1 flex-col justify-center gap-6 rounded-3xl border border-[#edd9c7] bg-white/70 p-8 shadow-[0_30px_90px_-60px_rgba(31,27,22,0.8)] backdrop-blur lg:mr-10 lg:max-w-md">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#f97316] to-[#0f766e]" />
+            <div>
+              <div className="text-2xl font-extrabold tracking-tight text-[#1f1b16]">
+                BillSutra
+              </div>
+              <div className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8a6d56]">
+                Workspace
+              </div>
             </div>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#b45309]">
-              Create account
+          </div>
+          <h1 className="text-3xl font-semibold leading-tight">
+            Create your billing workspace in minutes.
+          </h1>
+          <p className="text-sm text-[#5c4b3b]">
+            Centralize customers, products, invoices, and payment follow-ups
+            from day one.
+          </p>
+          <div className="grid gap-3 text-sm text-[#5c4b3b]">
+            <div className="flex items-center justify-between rounded-2xl border border-[#f2e6dc] bg-white/80 px-4 py-3">
+              <span>Teams onboarded</span>
+              <span className="font-semibold text-[#1f1b16]">120+</span>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl border border-[#f2e6dc] bg-white/80 px-4 py-3">
+              <span>Average setup time</span>
+              <span className="font-semibold text-[#1f1b16]">8 min</span>
             </div>
           </div>
         </div>
-        <h1 className="mt-6 text-2xl font-bold text-[#1f1b16]">
-          Start billing with confidence
-        </h1>
-        <p className="mt-2 text-sm text-[#5c4b3b]">
-          Create your BillSutra workspace and get invoices out in minutes.
-        </p>
 
-        <div className="mt-6">
-          <Register />
+        <div className="mt-8 flex flex-1 items-center lg:mt-0">
+          <div className="w-full rounded-3xl border border-[#ecdccf] bg-white/90 px-8 py-10 shadow-xl">
+            <div className="mb-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8a6d56]">
+                Create account
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">Get started</h2>
+              <p className="mt-2 text-sm text-[#5c4b3b]">
+                Sign up with your work email to access the dashboard.
+              </p>
+            </div>
+            <Register />
+            <p className="mt-6 text-center text-sm text-[#5c4b3b]">
+              Already have an account?{" "}
+              <Link href="/login" className="font-semibold text-[#b45309]">
+                Login
+              </Link>
+            </p>
+          </div>
         </div>
-
-        <p className="mt-6 text-center text-sm text-[#5c4b3b]">
-          Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-[#b45309]">
-            Login
-          </Link>
-        </p>
       </div>
     </div>
   );

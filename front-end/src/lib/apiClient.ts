@@ -1,13 +1,23 @@
 import axios from "axios";
+import { getSession } from "next-auth/react";
 import { API_URL } from "./apiEndPoints";
 
 const apiClient = axios.create({
   baseURL: API_URL,
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
-    const token = window.localStorage.getItem("token");
+    let token = window.localStorage.getItem("token");
+
+    if (!token) {
+      const session = await getSession();
+      token = (session?.user as { token?: string } | undefined)?.token ?? null;
+      if (token) {
+        window.localStorage.setItem("token", token);
+      }
+    }
+
     if (token) {
       const header = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
       config.headers.Authorization = header;
@@ -172,11 +182,24 @@ export type Warehouse = {
   }>;
 };
 
+export type WarehouseInput = {
+  name: string;
+  location?: string | null;
+};
+
 export type Inventory = {
   id: number;
   quantity: number;
   warehouse: Warehouse;
   product: Product;
+};
+
+export type InventoryAdjustInput = {
+  warehouse_id: number;
+  product_id: number;
+  change: number;
+  reason?: "PURCHASE" | "SALE" | "ADJUSTMENT" | "RETURN" | "DAMAGE";
+  note?: string | null;
 };
 
 export const fetchReportsSummary = async (): Promise<ReportsSummary> => {
@@ -300,6 +323,24 @@ export const fetchWarehouses = async (): Promise<Warehouse[]> => {
   return response.data.data as Warehouse[];
 };
 
+export const createWarehouse = async (
+  payload: WarehouseInput,
+): Promise<Warehouse> => {
+  const response = await apiClient.post("/warehouses", payload);
+  return response.data.data as Warehouse;
+};
+
+export const updateWarehouse = async (
+  id: number,
+  payload: Partial<WarehouseInput>,
+): Promise<void> => {
+  await apiClient.put(`/warehouses/${id}`, payload);
+};
+
+export const deleteWarehouse = async (id: number): Promise<void> => {
+  await apiClient.delete(`/warehouses/${id}`);
+};
+
 export const fetchWarehouse = async (
   warehouseId: number,
 ): Promise<Warehouse> => {
@@ -314,6 +355,13 @@ export const fetchInventories = async (
     params: warehouseId ? { warehouse_id: warehouseId } : undefined,
   });
   return response.data.data as Inventory[];
+};
+
+export const adjustInventory = async (
+  payload: InventoryAdjustInput,
+): Promise<{ inventory: Inventory; product: Product }> => {
+  const response = await apiClient.post("/inventories/adjust", payload);
+  return response.data.data as { inventory: Inventory; product: Product };
 };
 
 export default apiClient;

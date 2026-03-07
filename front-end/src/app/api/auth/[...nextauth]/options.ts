@@ -106,7 +106,7 @@ export const authOptions: AuthOptions = {
           const { data } = await axios.post(LOGIN_URL, payload);
 
           user.id = data?.user?.id?.toString();
-          user.token = data?.user?.token;
+          user.token = data?.token ?? data?.user?.token ?? null;
           user.provider = account?.provider;
         }
 

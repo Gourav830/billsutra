@@ -20,6 +20,7 @@ import {
   fetchWarehouse,
   fetchWarehouses,
   fetchInventories,
+  adjustInventory,
   updateSale,
   updateSupplier,
   updateProduct,
@@ -193,3 +194,15 @@ export const useInventoriesQuery = (warehouseId?: number) =>
     queryKey: ["inventories", warehouseId ?? "all"],
     queryFn: () => fetchInventories(warehouseId),
   });
+
+export const useAdjustInventoryMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adjustInventory,
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["inventories"] }),
+        queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+      ]),
+  });
+};

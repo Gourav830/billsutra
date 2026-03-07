@@ -120,3 +120,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: white;
+    color: #111111;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .printable {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .printable .invoice-sheet {
+    box-shadow: none !important;
+    border: 1px solid #e5e0d8 !important;
+    padding: 20px !important;
+  }
+}

@@ -171,6 +171,46 @@ export type SaleInput = {
   }>;
 };
 
+export type Invoice = {
+  id: number;
+  invoice_number: string;
+  date: string;
+  due_date?: string | null;
+  status: string;
+  subtotal: string;
+  tax: string;
+  discount: string;
+  total: string;
+  customer?: Customer | null;
+  items: Array<{
+    id: number;
+    product_id?: number | null;
+    name: string;
+    quantity: number;
+    price: string;
+    tax_rate?: string | null;
+    total: string;
+  }>;
+};
+
+export type InvoiceInput = {
+  customer_id: number;
+  date?: string | Date | null;
+  due_date?: string | Date | null;
+  discount?: number | null;
+  status?: string | null;
+  notes?: string | null;
+  sync_sales?: boolean;
+  warehouse_id?: number | null;
+  items: Array<{
+    product_id?: number | null;
+    name: string;
+    quantity: number;
+    price: number;
+    tax_rate?: number | null;
+  }>;
+};
+
 export type Warehouse = {
   id: number;
   name: string;
@@ -316,6 +356,27 @@ export const updateSale = async (
   payload: { status?: string; notes?: string },
 ): Promise<void> => {
   await apiClient.put(`/sales/${id}`, payload);
+};
+
+export const fetchInvoices = async (): Promise<Invoice[]> => {
+  const response = await apiClient.get("/invoices");
+  return response.data.data as Invoice[];
+};
+
+export const fetchInvoice = async (invoiceId: number): Promise<Invoice> => {
+  const response = await apiClient.get(`/invoices/${invoiceId}`);
+  return response.data.data as Invoice;
+};
+
+export const createInvoice = async (
+  payload: InvoiceInput,
+): Promise<Invoice> => {
+  const response = await apiClient.post("/invoices", payload);
+  return response.data.data as Invoice;
+};
+
+export const deleteInvoice = async (invoiceId: number): Promise<void> => {
+  await apiClient.delete(`/invoices/${invoiceId}`);
 };
 
 export const fetchWarehouses = async (): Promise<Warehouse[]> => {

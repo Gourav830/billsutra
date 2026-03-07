@@ -93,15 +93,19 @@ const invoiceItemSchema = z.object({
   product_id: z.coerce.number().int().positive().optional(),
   name: z.string().min(1),
   quantity: z.coerce.number().int().positive(),
-  unit_price: z.coerce.number().nonnegative(),
+  price: z.coerce.number().nonnegative(),
   tax_rate: z.coerce.number().nonnegative().optional(),
 });
 
 export const invoiceCreateSchema = z.object({
   customer_id: z.coerce.number().int().positive(),
+  date: z.coerce.date().optional(),
   due_date: z.coerce.date().optional(),
+  discount: z.coerce.number().nonnegative().optional(),
   status: z.nativeEnum(InvoiceStatus).optional(),
   notes: z.string().optional(),
+  sync_sales: z.boolean().optional(),
+  warehouse_id: z.coerce.number().int().positive().optional(),
   items: z.array(invoiceItemSchema).min(1),
 });
 

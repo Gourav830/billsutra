@@ -26,13 +26,17 @@ const ReportSummary = () => {
     );
   }
 
+  const totalBilled = Number(data.total_billed) || 0;
+  const totalPaid = Number(data.total_paid) || 0;
+  const profit = Number(data.profit) || 0;
+
   const cards = [
     { label: "Invoices", value: data.invoices },
     { label: "Sales", value: data.sales },
     { label: "Purchases", value: data.purchases },
-    { label: "Total billed", value: `₹${data.total_billed.toFixed(2)}` },
-    { label: "Total paid", value: `₹${data.total_paid.toFixed(2)}` },
-    { label: "Profit", value: `₹${data.profit.toFixed(2)}` },
+    { label: "Total billed", value: `₹${totalBilled.toFixed(2)}` },
+    { label: "Total paid", value: `₹${totalPaid.toFixed(2)}` },
+    { label: "Profit", value: `₹${profit.toFixed(2)}` },
   ];
 
   return (

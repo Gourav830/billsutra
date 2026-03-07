@@ -6,12 +6,25 @@ import {
   invoiceCreateSchema,
   invoiceUpdateSchema,
 } from "../validations/apiValidations.js";
+import { calculateInvoiceTotals } from "../utils/invoiceCalculations.js";
 
 type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
 type InvoiceUpdateInput = z.infer<typeof invoiceUpdateSchema>;
 type InvoiceItemInput = InvoiceCreateInput["items"][number];
 
 class InvoicesController {
+  static async nextInvoiceNumber(userId: number) {
+    const latest = await prisma.invoice.findFirst({
+      where: { user_id: userId },
+      orderBy: { createdAt: "desc" },
+      select: { invoice_number: true },
+    });
+
+    const match = latest?.invoice_number?.match(/INV-(\d+)/i);
+    const next = match ? Number(match[1]) + 1 : 1;
+    return `INV-${String(next).padStart(4, "0")}`;
+  }
+
   static async index(req: Request, res: Response) {
     const userId = req.user?.id;
     if (!userId) {
@@ -21,7 +34,7 @@ class InvoicesController {
     const invoices = await prisma.invoice.findMany({
       where: { user_id: userId },
       include: { customer: true, items: true, payments: true },
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
     return res.status(200).json({ data: invoices });
@@ -35,33 +48,24 @@ class InvoicesController {
 
     const body: InvoiceCreateInput = req.body;
 
-    let subtotal = 0;
-    let tax = 0;
-    const items = body.items.map((item: InvoiceItemInput) => {
-      const lineSubtotal = item.quantity * item.unit_price;
-      const lineTax = item.tax_rate ? (lineSubtotal * item.tax_rate) / 100 : 0;
-      subtotal += lineSubtotal;
-      tax += lineTax;
-      return {
-        product_id: item.product_id,
-        name: item.name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        tax_rate: item.tax_rate,
-        line_total: lineSubtotal + lineTax,
-      };
-    });
+    const { subtotal, tax, discount, total, items } = calculateInvoiceTotals(
+      body.items,
+      body.discount ?? 0,
+    );
 
-    const total = subtotal + tax;
+    const invoiceNumber = await InvoicesController.nextInvoiceNumber(userId);
 
     const invoice = await prisma.invoice.create({
       data: {
         user_id: userId,
         customer_id: body.customer_id,
+        invoice_number: invoiceNumber,
+        date: body.date ?? undefined,
         due_date: body.due_date ?? undefined,
         status: body.status ?? InvoiceStatus.DRAFT,
         subtotal,
         tax,
+        discount,
         total,
         notes: body.notes,
         items: { create: items },

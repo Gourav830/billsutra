@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +14,23 @@ import LogoutModal from "./LogoutModal";
 import dynamic from "next/dynamic";
 const LogoutModalDynamic = dynamic(() => import("../auth/LogoutModal"));
 const ProfileMenu = ({ name, image }: { name: string; image?: string }) => {
-  const [logoutopen,setLogoutOpen]=useState(false);
-    return (
+  const [logoutopen, setLogoutOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <UserAvtar name={name} image={image} />;
+  }
+  return (
     <div>
-        {logoutopen &&<Suspense fallback={<div>Loading...</div>}>
-            <LogoutModalDynamic open={logoutopen} setOpen={setLogoutOpen} />
-       
-        </Suspense>}
+      {logoutopen && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <LogoutModalDynamic open={logoutopen} setOpen={setLogoutOpen} />
+        </Suspense>
+      )}
 
       <DropdownMenu>
         <DropdownMenuTrigger>
@@ -30,7 +40,13 @@ const ProfileMenu = ({ name, image }: { name: string; image?: string }) => {
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem onClick={()=>{setLogoutOpen(true)}}>Logout</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              setLogoutOpen(true);
+            }}
+          >
+            Logout
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

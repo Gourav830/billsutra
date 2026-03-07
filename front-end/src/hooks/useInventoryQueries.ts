@@ -16,6 +16,10 @@ import {
   fetchProducts,
   fetchPurchases,
   fetchSales,
+  fetchInvoices,
+  fetchInvoice,
+  createInvoice,
+  deleteInvoice,
   fetchSuppliers,
   fetchWarehouse,
   fetchWarehouses,
@@ -159,6 +163,32 @@ export const useUpdatePurchaseMutation = () => {
 
 export const useSalesQuery = () =>
   useQuery({ queryKey: ["sales"], queryFn: fetchSales });
+
+export const useInvoicesQuery = () =>
+  useQuery({ queryKey: ["invoices"], queryFn: fetchInvoices });
+
+export const useInvoiceQuery = (invoiceId?: number) =>
+  useQuery({
+    queryKey: ["invoices", invoiceId],
+    queryFn: () => fetchInvoice(invoiceId ?? 0),
+    enabled: Number.isFinite(invoiceId) && (invoiceId ?? 0) > 0,
+  });
+
+export const useCreateInvoiceMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createInvoice,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+  });
+};
+
+export const useDeleteInvoiceMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteInvoice,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+  });
+};
 
 export const useCreateSaleMutation = () => {
   const queryClient = useQueryClient();

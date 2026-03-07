@@ -36,6 +36,9 @@ ChartJS.register(
   Filler,
 );
 
+ChartJS.defaults.color = "#1f1b16";
+ChartJS.defaults.borderColor = "#e4d6ca";
+
 const trendLabels = [
   "Week 1",
   "Week 2",

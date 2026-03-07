@@ -3,7 +3,6 @@ import AuthController from "../controllers/AuthController.js";
 import CustomersController from "../controllers/CustomersController.js";
 import CategoriesController from "../controllers/CategoriesController.js";
 import ProductsController from "../controllers/ProductsController.js";
-import InvoicesController from "../controllers/InvoicesController.js";
 import PaymentsController from "../controllers/PaymentsController.js";
 import ReportsController from "../controllers/ReportsController.js";
 import SuppliersController from "../controllers/SuppliersController.js";
@@ -28,8 +27,6 @@ import {
   supplierUpdateSchema,
   productCreateSchema,
   productUpdateSchema,
-  invoiceCreateSchema,
-  invoiceUpdateSchema,
   paymentCreateSchema,
   purchaseCreateSchema,
   purchaseUpdateSchema,
@@ -40,6 +37,7 @@ import {
   inventoryQuerySchema,
   inventoryAdjustSchema,
 } from "../validations/apiValidations.js";
+import invoiceRoutes from "../modules/invoice/invoice.routes.js";
 
 const router = Router();
 
@@ -242,31 +240,7 @@ router.post(
 );
 
 // Invoices
-router.get("/invoices", AuthMiddleware, InvoicesController.index);
-router.post(
-  "/invoices",
-  AuthMiddleware,
-  validate({ body: invoiceCreateSchema }),
-  InvoicesController.store,
-);
-router.get(
-  "/invoices/:id",
-  AuthMiddleware,
-  validate({ params: idParamSchema }),
-  InvoicesController.show,
-);
-router.put(
-  "/invoices/:id",
-  AuthMiddleware,
-  validate({ params: idParamSchema, body: invoiceUpdateSchema }),
-  InvoicesController.update,
-);
-router.delete(
-  "/invoices/:id",
-  AuthMiddleware,
-  validate({ params: idParamSchema }),
-  InvoicesController.destroy,
-);
+router.use("/invoices", invoiceRoutes);
 
 // Payments
 router.get("/payments", AuthMiddleware, PaymentsController.index);

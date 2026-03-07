@@ -1,9 +1,12 @@
-import Navbar from "@/components/base/Navbar";
-import HeroSection from "@/components/base/HeroSection";
-import FeatureSection from "@/components/base/FeatureSection";
-import UserReviews from "@/components/base/UserReviews";
-import Footer from "@/components/base/Footer";
-// import { authOptions, CustomSession } from "./api/auth/[...nextauth]/options";
+import Navbar from "@/components/navbar";
+import Hero from "@/components/hero";
+import Features from "@/components/features";
+import ProductPreview from "@/components/product-preview";
+import HowItWorks from "@/components/how-it-works";
+import Benefits from "@/components/benefits";
+import Cta from "@/components/cta";
+import Footer from "@/components/footer";
+import Pricing from "@/components/pricing";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions, CustomSession } from "./api/auth/[...nextauth]/options";
@@ -13,18 +16,15 @@ export default async function LandingPage() {
     redirect("/dashboard");
   }
   return (
-    <div className="min-h-screen flex flex-col ">
-      {/* Header */}
-      <Navbar user={session?.user ?? null} />
-      {/* Hero Section */}
-      <HeroSection />
-      {/* Features Section */}
-      <FeatureSection />
-
-      {/* User Reviews Section */}
-      <UserReviews />
-
-      {/* Footer */}
+    <div className="min-h-screen bg-[#f7f2ea] text-[#1f1b16] dark:bg-slate-950 dark:text-white">
+      <Navbar />
+      <Hero />
+      <Features />
+      <ProductPreview />
+      <HowItWorks />
+      <Benefits />
+      <Pricing />
+      <Cta />
       <Footer />
     </div>
   );

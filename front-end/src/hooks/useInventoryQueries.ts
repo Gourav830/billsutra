@@ -269,7 +269,9 @@ export const useInventoriesQuery = (warehouseId?: number) =>
   useQuery({
     queryKey: ["inventories", warehouseId ?? "all"],
     queryFn: () => fetchInventories(warehouseId),
-    enabled: Number.isFinite(warehouseId) && (warehouseId ?? 0) > 0,
+    enabled:
+      warehouseId === undefined ||
+      (Number.isFinite(warehouseId) && (warehouseId ?? 0) > 0),
   });
 
 export const useAdjustInventoryMutation = () => {

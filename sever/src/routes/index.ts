@@ -5,11 +5,13 @@ import CategoriesController from "../controllers/CategoriesController.js";
 import ProductsController from "../controllers/ProductsController.js";
 import PaymentsController from "../controllers/PaymentsController.js";
 import ReportsController from "../controllers/ReportsController.js";
+import DashboardController from "../controllers/DashboardController.js";
 import SuppliersController from "../controllers/SuppliersController.js";
 import PurchasesController from "../controllers/PurchasesController.js";
 import SalesController from "../controllers/SalesController.js";
 import WarehousesController from "../controllers/WarehousesController.js";
 import InventoriesController from "../controllers/InventoriesController.js";
+import UsersController from "../controllers/UsersController.js";
 import AuthMiddleware from "../middlewares/AuthMIddleware.js";
 import validate from "../middlewares/validate.js";
 import {
@@ -19,6 +21,8 @@ import {
   authRegisterSchema,
   authForgotSchema,
   authResetSchema,
+  userProfileUpdateSchema,
+  userPasswordUpdateSchema,
   customerCreateSchema,
   customerUpdateSchema,
   categoryCreateSchema,
@@ -93,6 +97,21 @@ router.delete(
   AuthMiddleware,
   validate({ params: idParamSchema }),
   CustomersController.destroy,
+);
+
+// Users
+router.get("/users/me", AuthMiddleware, UsersController.me);
+router.put(
+  "/users/me",
+  AuthMiddleware,
+  validate({ body: userProfileUpdateSchema }),
+  UsersController.updateProfile,
+);
+router.put(
+  "/users/password",
+  AuthMiddleware,
+  validate({ body: userPasswordUpdateSchema }),
+  UsersController.updatePassword,
 );
 
 // Categories
@@ -253,5 +272,31 @@ router.post(
 
 // Reports
 router.get("/reports/summary", AuthMiddleware, ReportsController.summary);
+
+// Dashboard
+router.get("/dashboard/overview", AuthMiddleware, DashboardController.overview);
+router.get("/dashboard/sales", AuthMiddleware, DashboardController.sales);
+router.get(
+  "/dashboard/inventory",
+  AuthMiddleware,
+  DashboardController.inventory,
+);
+router.get(
+  "/dashboard/transactions",
+  AuthMiddleware,
+  DashboardController.transactions,
+);
+router.get(
+  "/dashboard/customers",
+  AuthMiddleware,
+  DashboardController.customers,
+);
+router.get(
+  "/dashboard/suppliers",
+  AuthMiddleware,
+  DashboardController.suppliers,
+);
+router.get("/dashboard/cashflow", AuthMiddleware, DashboardController.cashflow);
+router.get("/dashboard/forecast", AuthMiddleware, DashboardController.forecast);
 
 export default router;

@@ -230,6 +230,8 @@ export type WarehouseInput = {
 export type Inventory = {
   id: number;
   quantity: number;
+  warehouse_id?: number;
+  product_id?: number;
   warehouse: Warehouse;
   product: Product;
 };
@@ -240,6 +242,128 @@ export type InventoryAdjustInput = {
   change: number;
   reason?: "PURCHASE" | "SALE" | "ADJUSTMENT" | "RETURN" | "DAMAGE";
   note?: string | null;
+};
+
+export type DashboardOverview = {
+  metrics: {
+    totalRevenue: number;
+    totalSales: number;
+    totalPurchases: number;
+    receivables: number;
+    payables: number;
+    inventoryValue: number;
+    changes: {
+      totalRevenue: number;
+      totalSales: number;
+      totalPurchases: number;
+      receivables: number;
+      payables: number;
+      inventoryValue: number;
+    };
+  };
+  invoiceStats: {
+    total: number;
+    paid: number;
+    pending: number;
+    overdue: number;
+  };
+  alerts: {
+    lowStock: string[];
+    overdueInvoices: string[];
+    supplierPayables: string[];
+  };
+  activity: Array<{ time: string; label: string }>;
+};
+
+export type DashboardSales = {
+  last7Days: Array<{ date: string; sales: number }>;
+  last30Days: Array<{ date: string; sales: number }>;
+  monthly: Array<{ month: string; sales: number; purchases: number }>;
+  categories: Array<{ name: string; value: number }>;
+};
+
+export type DashboardInventory = {
+  totalProducts: number;
+  lowStock: number;
+  outOfStock: number;
+  inventoryValue: number;
+  topSelling: { name: string; units: number } | null;
+  lowStockItems: Array<{
+    name: string;
+    stock: number;
+    reorder: number;
+  }>;
+};
+
+export type DashboardTransaction = {
+  date: string;
+  invoiceNumber: string;
+  customer: string;
+  amount: number;
+  status: string;
+};
+
+export type DashboardTransactions = {
+  transactions: DashboardTransaction[];
+};
+
+export type DashboardCustomers = {
+  total: number;
+  pendingPayments: number;
+  topCustomers: Array<{ name: string; total: number }>;
+};
+
+export type DashboardSuppliers = {
+  total: number;
+  recentPurchases: number;
+  outstandingPayables: number;
+};
+
+export type DashboardCashflow = {
+  inflow: number;
+  outflow: number;
+  net: number;
+  series: Array<{ date: string; inflow: number; outflow: number }>;
+};
+
+export type DashboardProfit = {
+  monthly: Array<{ month: string; profit: number; margin: number }>;
+  last30: Array<{
+    date: string;
+    revenue: number;
+    cost: number;
+    profit: number;
+  }>;
+};
+
+export type DashboardForecast = {
+  method: string;
+  next14Days: Array<{ date: string; forecast: number }>;
+};
+
+export type DashboardForecastResponse = {
+  profit: DashboardProfit;
+  forecast: DashboardForecast;
+};
+
+export type UserProfile = {
+  id: number;
+  name: string;
+  email: string;
+  provider: string;
+  image?: string | null;
+  is_email_verified: boolean;
+};
+
+export type UpdateProfilePayload = {
+  name?: string;
+  email?: string;
+};
+
+export type UpdatePasswordPayload = {
+  current_password: string;
+  password: string;
+  confirm_password: string;
 };
 
 export const fetchReportsSummary = async (): Promise<ReportsSummary> => {
@@ -278,6 +402,13 @@ export const fetchCustomers = async (): Promise<Customer[]> => {
 export const fetchCategories = async (): Promise<Category[]> => {
   const response = await apiClient.get("/categories");
   return response.data.data as Category[];
+};
+
+export const createCategory = async (payload: {
+  name: string;
+}): Promise<Category> => {
+  const response = await apiClient.post("/categories", payload);
+  return response.data.data as Category;
 };
 
 export const createCustomer = async (
@@ -423,6 +554,69 @@ export const adjustInventory = async (
 ): Promise<{ inventory: Inventory; product: Product }> => {
   const response = await apiClient.post("/inventories/adjust", payload);
   return response.data.data as { inventory: Inventory; product: Product };
+};
+
+export const fetchDashboardOverview = async (): Promise<DashboardOverview> => {
+  const response = await apiClient.get("/dashboard/overview");
+  return response.data.data as DashboardOverview;
+};
+
+export const fetchDashboardSales = async (): Promise<DashboardSales> => {
+  const response = await apiClient.get("/dashboard/sales");
+  return response.data.data as DashboardSales;
+};
+
+export const fetchDashboardInventory =
+  async (): Promise<DashboardInventory> => {
+    const response = await apiClient.get("/dashboard/inventory");
+    return response.data.data as DashboardInventory;
+  };
+
+export const fetchDashboardTransactions =
+  async (): Promise<DashboardTransactions> => {
+    const response = await apiClient.get("/dashboard/transactions");
+    return response.data.data as DashboardTransactions;
+  };
+
+export const fetchDashboardCustomers =
+  async (): Promise<DashboardCustomers> => {
+    const response = await apiClient.get("/dashboard/customers");
+    return response.data.data as DashboardCustomers;
+  };
+
+export const fetchDashboardSuppliers =
+  async (): Promise<DashboardSuppliers> => {
+    const response = await apiClient.get("/dashboard/suppliers");
+    return response.data.data as DashboardSuppliers;
+  };
+
+export const fetchDashboardCashflow = async (): Promise<DashboardCashflow> => {
+  const response = await apiClient.get("/dashboard/cashflow");
+  return response.data.data as DashboardCashflow;
+};
+
+export const fetchDashboardForecast =
+  async (): Promise<DashboardForecastResponse> => {
+    const response = await apiClient.get("/dashboard/forecast");
+    return response.data.data as DashboardForecastResponse;
+  };
+
+export const fetchUserProfile = async (): Promise<UserProfile> => {
+  const response = await apiClient.get("/users/me");
+  return response.data.data as UserProfile;
+};
+
+export const updateUserProfile = async (
+  payload: UpdateProfilePayload,
+): Promise<UserProfile> => {
+  const response = await apiClient.put("/users/me", payload);
+  return response.data.data as UserProfile;
+};
+
+export const updateUserPassword = async (
+  payload: UpdatePasswordPayload,
+): Promise<void> => {
+  await apiClient.put("/users/password", payload);
 };
 
 export default apiClient;

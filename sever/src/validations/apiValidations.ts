@@ -75,6 +75,22 @@ export const authResetSchema = z
     path: ["confirm_password"],
   });
 
+export const userProfileUpdateSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+});
+
+export const userPasswordUpdateSchema = z
+  .object({
+    current_password: z.string().min(6),
+    password: z.string().min(6),
+    confirm_password: z.string().min(6),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
 export const productCreateSchema = z.object({
   name: z.string().min(2),
   sku: z.string().min(1),

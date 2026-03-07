@@ -5,10 +5,15 @@ import {
 } from "../../api/auth/[...nextauth]/options";
 import WarehouseDetailClient from "./WarehouseDetailClient";
 
-const WarehouseDetailPage = async ({ params }: { params: { id: string } }) => {
+const WarehouseDetailPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const session: CustomSession | null = await getServerSession(authOptions);
   const name = session?.user?.name || "Guest";
-  const warehouseId = Number(params.id);
+  const { id } = await params;
+  const warehouseId = Number(id);
 
   return (
     <WarehouseDetailClient

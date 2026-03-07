@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   useAdjustInventoryMutation,
+  useInventoriesQuery,
   useProductsQuery,
   useWarehouseQuery,
 } from "@/hooks/useInventoryQueries";
@@ -26,6 +27,11 @@ const WarehouseDetailClient = ({
   warehouseId,
 }: WarehouseDetailClientProps) => {
   const { data, isLoading, isError } = useWarehouseQuery(warehouseId);
+  const {
+    data: inventories,
+    isLoading: isLoadingInventory,
+    isError: isInventoryError,
+  } = useInventoriesQuery(warehouseId);
   const { data: products } = useProductsQuery();
   const adjustInventory = useAdjustInventoryMutation();
   const [form, setForm] = useState({
@@ -36,6 +42,16 @@ const WarehouseDetailClient = ({
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
+
+  const filteredInventories = (inventories ?? []).filter((item) => {
+    const resolvedId = item.warehouse_id ?? item.warehouse?.id;
+    return resolvedId === warehouseId;
+  });
+
+  const stockItems =
+    filteredInventories.length > 0
+      ? filteredInventories
+      : (data?.inventories ?? []);
 
   const parseServerErrors = (error: unknown, fallback: string) => {
     if (axios.isAxiosError(error)) {
@@ -215,27 +231,42 @@ const WarehouseDetailClient = ({
           </div>
 
           <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-6">
-            {isLoading && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Stock left</h2>
+                <p className="text-sm text-[#8a6d56]">
+                  Remaining stock by product for this warehouse.
+                </p>
+              </div>
+              <div className="text-sm text-[#5c4b3b]">
+                {inventories ? `${stockItems.length} items` : ""}
+              </div>
+            </div>
+            {(isLoading || isLoadingInventory) && (
               <p className="text-sm text-[#8a6d56]">Loading inventory...</p>
             )}
-            {isError && (
+            {(isError || isInventoryError) && (
               <p className="text-sm text-[#b45309]">
                 Failed to load inventory.
               </p>
             )}
             {!isLoading &&
               !isError &&
-              (!data?.inventories || data.inventories.length === 0) && (
+              !isLoadingInventory &&
+              !isInventoryError &&
+              (!inventories || stockItems.length === 0) && (
                 <p className="text-sm text-[#8a6d56]">
                   No items stored here yet.
                 </p>
               )}
             {!isLoading &&
               !isError &&
-              data?.inventories &&
-              data.inventories.length > 0 && (
+              !isLoadingInventory &&
+              !isInventoryError &&
+              inventories &&
+              stockItems.length > 0 && (
                 <div className="grid gap-3">
-                  {data.inventories.map((item) => (
+                  {stockItems.map((item) => (
                     <div
                       key={item.id}
                       className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#f2e6dc] bg-[#fff9f2] px-4 py-3"
@@ -245,11 +276,11 @@ const WarehouseDetailClient = ({
                           {item.product.name} • {item.product.sku}
                         </p>
                         <p className="text-xs text-[#8a6d56]">
-                          Reorder at {item.product.reorder_level}
+                          Stock left: {item.quantity}
                         </p>
                       </div>
                       <div className="text-sm text-[#5c4b3b]">
-                        Stock: {item.quantity}
+                        Reorder level: {item.product.reorder_level}
                       </div>
                     </div>
                   ))}

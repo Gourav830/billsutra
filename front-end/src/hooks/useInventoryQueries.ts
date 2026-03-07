@@ -20,6 +20,7 @@ import {
   fetchInvoice,
   createInvoice,
   deleteInvoice,
+  createCategory,
   fetchSuppliers,
   fetchWarehouse,
   fetchWarehouses,
@@ -39,6 +40,15 @@ export const useProductsQuery = () =>
 
 export const useCategoriesQuery = () =>
   useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
+
+export const useCreateCategoryMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createCategory,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["categories"] }),
+  });
+};
 
 export const useCustomersQuery = () =>
   useQuery({ queryKey: ["customers"], queryFn: fetchCustomers });
@@ -259,6 +269,7 @@ export const useInventoriesQuery = (warehouseId?: number) =>
   useQuery({
     queryKey: ["inventories", warehouseId ?? "all"],
     queryFn: () => fetchInventories(warehouseId),
+    enabled: Number.isFinite(warehouseId) && (warehouseId ?? 0) > 0,
   });
 
 export const useAdjustInventoryMutation = () => {

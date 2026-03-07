@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   useCategoriesQuery,
+  useCreateCategoryMutation,
   useCreateProductMutation,
   useDeleteProductMutation,
   useProductsQuery,
@@ -21,6 +22,7 @@ type ProductsClientProps = {
 const ProductsClient = ({ name, image }: ProductsClientProps) => {
   const { data, isLoading, isError } = useProductsQuery();
   const { data: categories } = useCategoriesQuery();
+  const createCategory = useCreateCategoryMutation();
   const createProduct = useCreateProductMutation();
   const updateProduct = useUpdateProductMutation();
   const deleteProduct = useDeleteProductMutation();
@@ -37,8 +39,10 @@ const ProductsClient = ({ name, image }: ProductsClientProps) => {
     category_id: "",
   });
   const [editingForm, setEditingForm] = useState(form);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const isMutating =
+    createCategory.isPending ||
     createProduct.isPending ||
     updateProduct.isPending ||
     deleteProduct.isPending;
@@ -75,6 +79,16 @@ const ProductsClient = ({ name, image }: ProductsClientProps) => {
       category_id: form.category_id ? Number(form.category_id) : undefined,
     });
     resetForm();
+  };
+
+  const handleCreateCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      return;
+    }
+    const created = await createCategory.mutateAsync({ name: trimmed });
+    setNewCategoryName("");
+    setForm((prev) => ({ ...prev, category_id: created.id.toString() }));
   };
 
   const handleEdit = (id: number) => {
@@ -258,6 +272,30 @@ const ProductsClient = ({ name, image }: ProductsClientProps) => {
                   ))}
                 </select>
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="new-category">Add new category</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Input
+                    id="new-category"
+                    value={newCategoryName}
+                    onChange={(event) => setNewCategoryName(event.target.value)}
+                    placeholder="e.g. Electronics"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCreateCategory}
+                    disabled={createCategory.isPending}
+                  >
+                    {createCategory.isPending ? "Adding..." : "Add"}
+                  </Button>
+                </div>
+                {createCategory.isError && (
+                  <p className="text-sm text-[#b45309]">
+                    Unable to create category.
+                  </p>
+                )}
+              </div>
               <Button
                 type="submit"
                 className="bg-[#1f1b16] text-white hover:bg-[#2c2520]"
@@ -364,6 +402,26 @@ const ProductsClient = ({ name, image }: ProductsClientProps) => {
                                 }))
                               }
                             />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label>Category</Label>
+                            <select
+                              className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                              value={editingForm.category_id}
+                              onChange={(event) =>
+                                setEditingForm((prev) => ({
+                                  ...prev,
+                                  category_id: event.target.value,
+                                }))
+                              }
+                            >
+                              <option value="">Uncategorized</option>
+                              {categoryOptions.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <Button

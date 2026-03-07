@@ -17,19 +17,36 @@ class InventoriesController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const query: InventoryQueryInput = req.query;
-    const { warehouse_id: warehouseId } = query;
+    try {
+      const query: InventoryQueryInput = req.query;
+      const warehouseIdRaw = query.warehouse_id;
+      const warehouseId =
+        typeof warehouseIdRaw === "number"
+          ? warehouseIdRaw
+          : warehouseIdRaw
+            ? Number(warehouseIdRaw)
+            : undefined;
 
-    const inventories = await prisma.inventory.findMany({
-      where: {
-        warehouse: { user_id: userId },
-        ...(warehouseId ? { warehouse_id: warehouseId } : {}),
-      },
-      include: { warehouse: true, product: true },
-      orderBy: { id: "desc" },
-    });
+      if (warehouseIdRaw && !Number.isFinite(warehouseId)) {
+        return res.status(422).json({
+          message: "Validation failed",
+          errors: { warehouse_id: ["Invalid warehouse id"] },
+        });
+      }
 
-    return res.status(200).json({ data: inventories });
+      const inventories = await prisma.inventory.findMany({
+        where: {
+          warehouse: { user_id: userId },
+          ...(warehouseId ? { warehouse_id: warehouseId } : {}),
+        },
+        include: { warehouse: true, product: true },
+        orderBy: { id: "desc" },
+      });
+
+      return res.status(200).json({ data: inventories });
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to load inventories" });
+    }
   }
 
   static async adjust(req: Request, res: Response) {
@@ -101,4 +118,3 @@ class InventoriesController {
 }
 
 export default InventoriesController;
-

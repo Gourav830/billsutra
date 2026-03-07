@@ -12,6 +12,7 @@ import {
 import UserAvtar from "../common/UserAvtar";
 import LogoutModal from "./LogoutModal";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 const LogoutModalDynamic = dynamic(() => import("../auth/LogoutModal"));
 const ProfileMenu = ({ name, image }: { name: string; image?: string }) => {
   const [logoutopen, setLogoutOpen] = useState(false);
@@ -39,7 +40,9 @@ const ProfileMenu = ({ name, image }: { name: string; image?: string }) => {
         <DropdownMenuContent>
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Profile</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/profile">Profile</Link>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               setLogoutOpen(true);

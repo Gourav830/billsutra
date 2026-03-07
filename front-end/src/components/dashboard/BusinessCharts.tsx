@@ -36,7 +36,14 @@ ChartJS.register(
   Filler,
 );
 
-const trendLabels = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"];
+const trendLabels = [
+  "Week 1",
+  "Week 2",
+  "Week 3",
+  "Week 4",
+  "Week 5",
+  "Week 6",
+];
 
 const buildTrend = (base: number, multipliers: number[]) =>
   multipliers.map((multiplier) => Math.round(base * multiplier));
@@ -52,7 +59,10 @@ const BusinessCharts = () => {
   const billedBase = data?.total_billed ? Number(data.total_billed) / 6 : 52000;
   const paidBase = data?.total_paid ? Number(data.total_paid) / 6 : 41000;
   const billedTrend = buildTrend(billedBase, trendMultipliers);
-  const paidTrend = buildTrend(paidBase, trendMultipliers.map((m) => m - 0.08));
+  const paidTrend = buildTrend(
+    paidBase,
+    trendMultipliers.map((m) => m - 0.08),
+  );
 
   const salesCount = data?.sales ?? 0;
   const purchaseCount = data?.purchases ?? 0;
@@ -147,7 +157,9 @@ const BusinessCharts = () => {
         <Card className="border-[#ecdccf] bg-[#fff5ea]">
           <CardHeader>
             <CardTitle className="text-lg">Operational volume</CardTitle>
-            <CardDescription>Sales, purchases, and invoices today.</CardDescription>
+            <CardDescription>
+              Sales, purchases, and invoices today.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
@@ -167,7 +179,9 @@ const BusinessCharts = () => {
         <Card className="border-[#ecdccf] bg-white/90">
           <CardHeader>
             <CardTitle className="text-lg">Inventory health</CardTitle>
-            <CardDescription>Balance low stock, reorder, and healthy bins.</CardDescription>
+            <CardDescription>
+              Balance low stock, reorder, and healthy bins.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mx-auto h-[190px] max-w-[220px]">

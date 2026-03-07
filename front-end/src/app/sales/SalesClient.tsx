@@ -122,7 +122,8 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
       if (data?.message) messages.add(data.message);
       if (data?.errors) {
         Object.values(data.errors).forEach((values) => {
-          values.forEach((value) => messages.add(value));
+          const list = Array.isArray(values) ? values : [values];
+          list.forEach((value) => messages.add(value));
         });
       }
       if (messages.size) return Array.from(messages).join(" ");

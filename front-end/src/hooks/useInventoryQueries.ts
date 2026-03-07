@@ -20,6 +20,9 @@ import {
   fetchWarehouse,
   fetchWarehouses,
   fetchInventories,
+  createWarehouse,
+  updateWarehouse,
+  deleteWarehouse,
   adjustInventory,
   updateSale,
   updateSupplier,
@@ -181,6 +184,39 @@ export const useUpdateSaleMutation = () => {
 
 export const useWarehousesQuery = () =>
   useQuery({ queryKey: ["warehouses"], queryFn: fetchWarehouses });
+
+export const useCreateWarehouseMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createWarehouse,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+  });
+};
+
+export const useUpdateWarehouseMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: Record<string, unknown>;
+    }) => updateWarehouse(id, payload),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+  });
+};
+
+export const useDeleteWarehouseMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteWarehouse,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+  });
+};
 
 export const useWarehouseQuery = (warehouseId: number) =>
   useQuery({

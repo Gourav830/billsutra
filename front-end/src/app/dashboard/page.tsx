@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import ReportSummary from "@/components/dashboard/ReportSummary";
+import BusinessCharts from "@/components/dashboard/BusinessCharts";
 
 const Page = async () => {
   const session: CustomSession | null = await getServerSession(authOptions);
@@ -42,127 +43,7 @@ const Page = async () => {
 
           <ReportSummary />
 
-          <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
-            <Card className="border-[#ecdccf] bg-white/80">
-              <CardHeader>
-                <CardTitle className="text-xl">Invoice Overview</CardTitle>
-                <CardDescription>
-                  Live momentum across invoices, payments, and collections.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {[
-                    { label: "Draft invoices", value: "18", delta: "+6" },
-                    { label: "Paid today", value: "2,482", delta: "+14%" },
-                    { label: "Avg. pay time", value: "3.2d", delta: "-12%" },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="rounded-xl border border-[#f2e6dc] bg-[#fff9f2] p-4"
-                    >
-                      <p className="text-xs uppercase tracking-[0.18em] text-[#8a6d56]">
-                        {item.label}
-                      </p>
-                      <div className="mt-3 flex items-end justify-between">
-                        <span className="text-2xl font-black text-[#1f1b16]">
-                          {item.value}
-                        </span>
-                        <span className="rounded-full bg-[#fef3c7] px-2 py-1 text-xs font-semibold text-[#92400e]">
-                          {item.delta}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="rounded-2xl border border-[#f2e6dc] bg-[#1f1b16] p-5 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#f9d59b]">
-                        Collections
-                      </p>
-                      <h3 className="mt-2 text-xl font-semibold">
-                        Collections queue is clear
-                      </h3>
-                    </div>
-                    <button className="rounded-full bg-[#f6a54a] px-4 py-2 text-sm font-semibold text-[#1f1b16] shadow-sm transition hover:-translate-y-0.5">
-                      Review cashflow
-                    </button>
-                  </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {[
-                      "0 invoices past due today",
-                      "Auto-reminders: 12 sent",
-                    ].map((line) => (
-                      <div
-                        key={line}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
-                      >
-                        {line}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-4">
-              <Card className="border-[#ecdccf] bg-[#fff5ea]">
-                <CardHeader>
-                  <CardTitle className="text-lg">Inventory health</CardTitle>
-                  <CardDescription>
-                    Top stock groups moving fast today.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  {[
-                    { name: "Fast movers", pct: 72, tone: "bg-[#0f766e]" },
-                    { name: "Low stock", pct: 58, tone: "bg-[#b45309]" },
-                    { name: "Reorder queued", pct: 44, tone: "bg-[#334155]" },
-                  ].map((lane) => (
-                    <div key={lane.name} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm font-semibold">
-                        <span>{lane.name}</span>
-                        <span>{lane.pct}%</span>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-white">
-                        <div
-                          className={`h-2 rounded-full ${lane.tone}`}
-                          style={{ width: `${lane.pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="border-[#ecdccf] bg-white/80">
-                <CardHeader>
-                  <CardTitle className="text-lg">Quick actions</CardTitle>
-                  <CardDescription>
-                    Launch billing tools without leaving the desk.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-3">
-                  {[
-                    "Create invoice",
-                    "Record payment",
-                    "Generate statement",
-                    "Add inventory item",
-                  ].map((action) => (
-                    <button
-                      key={action}
-                      className="flex items-center justify-between rounded-xl border border-[#f2e6dc] bg-white px-4 py-3 text-left text-sm font-semibold text-[#1f1b16] transition hover:-translate-y-0.5 hover:border-[#f6a54a]"
-                    >
-                      {action}
-                      <span className="text-[#b45309]">+</span>
-                    </button>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <BusinessCharts />
         </section>
 
         <section className="mx-auto w-full max-w-6xl px-6 pb-16">

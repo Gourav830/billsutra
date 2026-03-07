@@ -2,26 +2,26 @@ import type { Request, Response } from "express";
 import prisma from "../config/db.config.js";
 import type { z } from "zod";
 import {
-  customerCreateSchema,
-  customerUpdateSchema,
+  warehouseCreateSchema,
+  warehouseUpdateSchema,
 } from "../validations/apiValidations.js";
 
-type CustomerCreateInput = z.infer<typeof customerCreateSchema>;
-type CustomerUpdateInput = z.infer<typeof customerUpdateSchema>;
+type WarehouseCreateInput = z.infer<typeof warehouseCreateSchema>;
+type WarehouseUpdateInput = z.infer<typeof warehouseUpdateSchema>;
 
-class CustomersController {
+class WarehousesController {
   static async index(req: Request, res: Response) {
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const customers = await prisma.customer.findMany({
+    const warehouses = await prisma.warehouse.findMany({
       where: { user_id: userId },
       orderBy: { created_at: "desc" },
     });
 
-    return res.status(200).json({ data: customers });
+    return res.status(200).json({ data: warehouses });
   }
 
   static async store(req: Request, res: Response) {
@@ -30,22 +30,16 @@ class CustomersController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const body: CustomerCreateInput = req.body;
-    const { name, email, phone, address } = body;
+    const body: WarehouseCreateInput = req.body;
+    const { name, location } = body;
 
-    const customer = await prisma.customer.create({
-      data: {
-        user_id: userId,
-        name,
-        email,
-        phone,
-        address,
-      },
+    const warehouse = await prisma.warehouse.create({
+      data: { user_id: userId, name, location },
     });
 
     return res
       .status(201)
-      .json({ message: "Customer created", data: customer });
+      .json({ message: "Warehouse created", data: warehouse });
   }
 
   static async show(req: Request, res: Response) {
@@ -55,15 +49,16 @@ class CustomersController {
     }
 
     const id = Number(req.params.id);
-    const customer = await prisma.customer.findFirst({
+    const warehouse = await prisma.warehouse.findFirst({
       where: { id, user_id: userId },
+      include: { inventories: { include: { product: true } } },
     });
 
-    if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
+    if (!warehouse) {
+      return res.status(404).json({ message: "Warehouse not found" });
     }
 
-    return res.status(200).json({ data: customer });
+    return res.status(200).json({ data: warehouse });
   }
 
   static async update(req: Request, res: Response) {
@@ -73,19 +68,19 @@ class CustomersController {
     }
 
     const id = Number(req.params.id);
-    const body: CustomerUpdateInput = req.body;
-    const { name, email, phone, address } = body;
+    const body: WarehouseUpdateInput = req.body;
+    const { name, location } = body;
 
-    const updated = await prisma.customer.updateMany({
+    const updated = await prisma.warehouse.updateMany({
       where: { id, user_id: userId },
-      data: { name, email, phone, address },
+      data: { name, location },
     });
 
     if (!updated.count) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "Warehouse not found" });
     }
 
-    return res.status(200).json({ message: "Customer updated" });
+    return res.status(200).json({ message: "Warehouse updated" });
   }
 
   static async destroy(req: Request, res: Response) {
@@ -95,17 +90,17 @@ class CustomersController {
     }
 
     const id = Number(req.params.id);
-    const deleted = await prisma.customer.deleteMany({
+    const deleted = await prisma.warehouse.deleteMany({
       where: { id, user_id: userId },
     });
 
     if (!deleted.count) {
-      return res.status(404).json({ message: "Customer not found" });
+      return res.status(404).json({ message: "Warehouse not found" });
     }
 
-    return res.status(200).json({ message: "Customer removed" });
+    return res.status(200).json({ message: "Warehouse removed" });
   }
 }
 
-export default CustomersController;
+export default WarehousesController;
 

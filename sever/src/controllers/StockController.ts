@@ -1,6 +1,10 @@
 import type { Request, Response } from "express";
 import prisma from "../config/db.config.js";
 import { StockReason } from "@prisma/client";
+import type { z } from "zod";
+import { stockAdjustSchema } from "../validations/apiValidations.js";
+
+type StockAdjustInput = z.infer<typeof stockAdjustSchema>;
 
 class StockController {
   static async adjust(req: Request, res: Response) {
@@ -9,19 +13,8 @@ class StockController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const { product_id, change, reason, note } = req.body as {
-      product_id?: number;
-      change?: number;
-      reason?: StockReason;
-      note?: string;
-    };
-
-    if (!product_id || change === undefined) {
-      return res.status(422).json({
-        message: "Product and change are required",
-        errors: { product_id: "Required", change: "Required" },
-      });
-    }
+    const body: StockAdjustInput = req.body;
+    const { product_id, warehouse_id, change, reason, note } = body;
 
     const product = await prisma.product.findFirst({
       where: { id: product_id, user_id: userId },
@@ -31,20 +24,53 @@ class StockController {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    const updated = await prisma.product.update({
-      where: { id: product.id },
-      data: {
-        stock_on_hand: product.stock_on_hand + change,
-      },
-    });
+    if (warehouse_id) {
+      const warehouse = await prisma.warehouse.findFirst({
+        where: { id: warehouse_id, user_id: userId },
+      });
 
-    await prisma.stockMovement.create({
-      data: {
-        product_id: product.id,
-        change,
-        reason: reason ?? StockReason.ADJUSTMENT,
-        note,
-      },
+      if (!warehouse) {
+        return res.status(404).json({ message: "Warehouse not found" });
+      }
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const updatedProduct = await tx.product.update({
+        where: { id: product.id },
+        data: {
+          stock_on_hand: product.stock_on_hand + change,
+        },
+      });
+
+      if (warehouse_id) {
+        await tx.inventory.upsert({
+          where: {
+            warehouse_id_product_id: {
+              warehouse_id,
+              product_id: product.id,
+            },
+          },
+          update: { quantity: { increment: change } },
+          create: {
+            warehouse_id,
+            product_id: product.id,
+            quantity: change,
+          },
+        });
+      }
+
+      await tx.stockMovement.create({
+        data: {
+          product_id: product.id,
+          change,
+          reason: reason ?? StockReason.ADJUSTMENT,
+          note: warehouse_id
+            ? `${note ?? "Adjustment"} (Warehouse ${warehouse_id})`
+            : note,
+        },
+      });
+
+      return updatedProduct;
     });
 
     return res.status(200).json({ message: "Stock updated", data: updated });
@@ -52,3 +78,4 @@ class StockController {
 }
 
 export default StockController;
+

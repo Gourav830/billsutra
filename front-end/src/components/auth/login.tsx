@@ -24,6 +24,9 @@ export default function Login() {
       toast.error(state.message);
     } else if (state.status === 200) {
       toast.success(state.message);
+      if (state.data?.token) {
+        window.localStorage.setItem("token", state.data.token as string);
+      }
       signIn("credentials", {
         email: state.data?.email,
         password: state.data?.password,

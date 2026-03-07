@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import ReportSummary from "@/components/dashboard/ReportSummary";
 
 const Page = async () => {
   const session: CustomSession | null = await getServerSession(authOptions);
@@ -38,6 +39,8 @@ const Page = async () => {
               with a crisp, focused control room.
             </p>
           </div>
+
+          <ReportSummary />
 
           <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
             <Card className="border-[#ecdccf] bg-white/80">

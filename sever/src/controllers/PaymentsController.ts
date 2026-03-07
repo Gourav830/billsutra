@@ -1,6 +1,10 @@
 import type { Request, Response } from "express";
 import prisma from "../config/db.config.js";
 import { InvoiceStatus, PaymentMethod } from "@prisma/client";
+import type { z } from "zod";
+import { paymentCreateSchema } from "../validations/apiValidations.js";
+
+type PaymentCreateInput = z.infer<typeof paymentCreateSchema>;
 
 class PaymentsController {
   static async index(req: Request, res: Response) {
@@ -24,20 +28,7 @@ class PaymentsController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const body = req.body as {
-      invoice_id?: number;
-      amount?: number;
-      method?: PaymentMethod;
-      reference?: string;
-      paid_at?: string;
-    };
-
-    if (!body.invoice_id || body.amount === undefined) {
-      return res.status(422).json({
-        message: "Invoice and amount are required",
-        errors: { invoice_id: "Required", amount: "Required" },
-      });
-    }
+    const body: PaymentCreateInput = req.body;
 
     const invoice = await prisma.invoice.findFirst({
       where: { id: body.invoice_id, user_id: userId },
@@ -54,7 +45,7 @@ class PaymentsController {
         amount: body.amount,
         method: body.method ?? PaymentMethod.CASH,
         reference: body.reference,
-        paid_at: body.paid_at ? new Date(body.paid_at) : undefined,
+        paid_at: body.paid_at ?? undefined,
       },
     });
 
@@ -83,3 +74,4 @@ class PaymentsController {
 }
 
 export default PaymentsController;
+

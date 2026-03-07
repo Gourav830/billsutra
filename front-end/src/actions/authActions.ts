@@ -69,7 +69,7 @@ export async function forgetAction(prevState: any, formData: FormData) {
 }
 export async function loginAction(prevState: any, formData: FormData) {
   try {
-    const data = await axios.post(check_credential, {
+    const response = await axios.post(check_credential, {
       email: formData.get("email"),
       password: formData.get("password"),
     });
@@ -80,6 +80,7 @@ export async function loginAction(prevState: any, formData: FormData) {
       data: {
         email: formData.get("email"),
         password: formData.get("password"),
+        token: response.data?.token ?? null,
       },
     };
   } catch (error) {

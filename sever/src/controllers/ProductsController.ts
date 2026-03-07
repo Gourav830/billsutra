@@ -1,5 +1,13 @@
 import type { Request, Response } from "express";
 import prisma from "../config/db.config.js";
+import type { z } from "zod";
+import {
+  productCreateSchema,
+  productUpdateSchema,
+} from "../validations/apiValidations.js";
+
+type ProductCreateInput = z.infer<typeof productCreateSchema>;
+type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
 
 class ProductsController {
   static async index(req: Request, res: Response) {
@@ -10,6 +18,7 @@ class ProductsController {
 
     const products = await prisma.product.findMany({
       where: { user_id: userId },
+      include: { category: true },
       orderBy: { created_at: "desc" },
     });
 
@@ -22,28 +31,47 @@ class ProductsController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const { name, sku, price, cost, stock_on_hand, reorder_level } =
-      req.body as {
-        name?: string;
-        sku?: string;
-        price?: number;
-        cost?: number;
-        stock_on_hand?: number;
-        reorder_level?: number;
-      };
+    const body: ProductCreateInput = req.body;
+    const {
+      name,
+      sku,
+      price,
+      barcode,
+      gst_rate,
+      cost,
+      stock_on_hand,
+      reorder_level,
+      category_id,
+    } = body;
 
-    if (!name || !sku || price === undefined) {
-      return res.status(422).json({
-        message: "Name, SKU, and price are required",
-        errors: { name: "Required", sku: "Required", price: "Required" },
+    if (category_id) {
+      const category = await prisma.category.findFirst({
+        where: { id: category_id, user_id: userId },
       });
+
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+    }
+
+    if (barcode) {
+      const existingBarcode = await prisma.product.findFirst({
+        where: { barcode },
+      });
+
+      if (existingBarcode) {
+        return res.status(409).json({ message: "Barcode already in use" });
+      }
     }
 
     const product = await prisma.product.create({
       data: {
         user_id: userId,
+        category_id,
         name,
         sku,
+        barcode,
+        gst_rate,
         price,
         cost,
         stock_on_hand: stock_on_hand ?? 0,
@@ -63,6 +91,7 @@ class ProductsController {
     const id = Number(req.params.id);
     const product = await prisma.product.findFirst({
       where: { id, user_id: userId },
+      include: { category: true },
     });
 
     if (!product) {
@@ -79,19 +108,52 @@ class ProductsController {
     }
 
     const id = Number(req.params.id);
-    const { name, sku, price, cost, stock_on_hand, reorder_level } =
-      req.body as {
-        name?: string;
-        sku?: string;
-        price?: number;
-        cost?: number;
-        stock_on_hand?: number;
-        reorder_level?: number;
-      };
+    const body: ProductUpdateInput = req.body;
+    const {
+      name,
+      sku,
+      price,
+      barcode,
+      gst_rate,
+      cost,
+      stock_on_hand,
+      reorder_level,
+      category_id,
+    } = body;
+
+    if (category_id) {
+      const category = await prisma.category.findFirst({
+        where: { id: category_id, user_id: userId },
+      });
+
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+    }
+
+    if (barcode) {
+      const existingBarcode = await prisma.product.findFirst({
+        where: { barcode, NOT: { id } },
+      });
+
+      if (existingBarcode) {
+        return res.status(409).json({ message: "Barcode already in use" });
+      }
+    }
 
     const updated = await prisma.product.updateMany({
       where: { id, user_id: userId },
-      data: { name, sku, price, cost, stock_on_hand, reorder_level },
+      data: {
+        name,
+        sku,
+        barcode,
+        gst_rate,
+        price,
+        cost,
+        stock_on_hand,
+        reorder_level,
+        category_id,
+      },
     });
 
     if (!updated.count) {
@@ -121,3 +183,4 @@ class ProductsController {
 }
 
 export default ProductsController;
+

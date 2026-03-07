@@ -3,21 +3,14 @@ import prisma from "../config/db.config.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-
-interface OAuthLoginPayload {
-  name?: string;
-  email: string;
-  provider?: string;
-  oauth_id?: string;
-  image?: string;
-}
-
-interface CredentialsPayload {
-  name?: string;
-  email: string;
-  password: string;
-  confirm_password?: string;
-}
+import type { z } from "zod";
+import {
+  authForgotSchema,
+  authLoginSchema,
+  authOauthSchema,
+  authRegisterSchema,
+  authResetSchema,
+} from "../validations/apiValidations.js";
 
 const signToken = (payload: { id: number; email: string; name: string }) => {
   return jwt.sign(payload, process.env.JWT_SECRET as string, {
@@ -25,13 +18,16 @@ const signToken = (payload: { id: number; email: string; name: string }) => {
   });
 };
 
+type OAuthLoginPayload = z.infer<typeof authOauthSchema>;
+type CredentialsLoginPayload = z.infer<typeof authLoginSchema>;
+type CredentialsRegisterPayload = z.infer<typeof authRegisterSchema>;
+type ForgotPasswordPayload = z.infer<typeof authForgotSchema>;
+type ResetPasswordPayload = z.infer<typeof authResetSchema>;
+
 class AuthController {
   static async oauthLogin(req: Request, res: Response) {
     try {
       const body: OAuthLoginPayload = req.body;
-      if (!body?.email) {
-        return res.status(400).json({ message: "Email is required" });
-      }
 
       const provider = body.provider || "google";
       const findUser = await prisma.user.upsert({
@@ -71,19 +67,7 @@ class AuthController {
 
   static async register(req: Request, res: Response) {
     try {
-      const body: CredentialsPayload = req.body;
-      if (!body?.email || !body?.password || !body?.name) {
-        return res.status(422).json({
-          message: "Name, email, and password are required",
-          errors: { email: "Required", password: "Required", name: "Required" },
-        });
-      }
-      if (body.confirm_password && body.confirm_password !== body.password) {
-        return res.status(422).json({
-          message: "Passwords do not match",
-          errors: { confirm_password: "Passwords do not match" },
-        });
-      }
+      const body: CredentialsRegisterPayload = req.body;
 
       const existing = await prisma.user.findUnique({
         where: { email: body.email },
@@ -116,13 +100,7 @@ class AuthController {
 
   static async loginCheck(req: Request, res: Response) {
     try {
-      const body: CredentialsPayload = req.body;
-      if (!body?.email || !body?.password) {
-        return res.status(422).json({
-          message: "Email and password are required",
-          errors: { email: "Required", password: "Required" },
-        });
-      }
+      const body: CredentialsLoginPayload = req.body;
 
       const user = await prisma.user.findUnique({
         where: { email: body.email },
@@ -161,13 +139,8 @@ class AuthController {
 
   static async forgotPassword(req: Request, res: Response) {
     try {
-      const email = req.body?.email as string | undefined;
-      if (!email) {
-        return res.status(422).json({
-          message: "Email is required",
-          errors: { email: "Required" },
-        });
-      }
+      const body: ForgotPasswordPayload = req.body;
+      const { email } = body;
 
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
@@ -199,25 +172,7 @@ class AuthController {
 
   static async resetPassword(req: Request, res: Response) {
     try {
-      const { email, password, confirm_password, token } = req.body as {
-        email?: string;
-        password?: string;
-        confirm_password?: string;
-        token?: string;
-      };
-
-      if (!email || !password || !token) {
-        return res.status(422).json({
-          message: "Email, token, and password are required",
-          errors: { email: "Required", password: "Required" },
-        });
-      }
-      if (confirm_password && confirm_password !== password) {
-        return res.status(422).json({
-          message: "Passwords do not match",
-          errors: { confirm_password: "Passwords do not match" },
-        });
-      }
+      const { email, password, token } = req.body as ResetPasswordPayload;
 
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
@@ -261,3 +216,4 @@ class AuthController {
 }
 
 export default AuthController;
+

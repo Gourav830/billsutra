@@ -1,0 +1,191 @@
+import { z } from "zod";
+import {
+  InvoiceStatus,
+  PaymentMethod,
+  SaleStatus,
+  StockReason,
+} from "@prisma/client";
+
+export const idParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+export const categoryCreateSchema = z.object({
+  name: z.string().min(2),
+});
+
+export const categoryUpdateSchema = categoryCreateSchema.partial();
+
+export const supplierCreateSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email().optional(),
+  phone: z.string().min(6).optional(),
+  address: z.string().optional(),
+});
+
+export const supplierUpdateSchema = supplierCreateSchema.partial();
+
+export const customerCreateSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email().optional(),
+  phone: z.string().min(6).optional(),
+  address: z.string().optional(),
+});
+
+export const customerUpdateSchema = customerCreateSchema.partial();
+
+export const authLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const authOauthSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(2).optional(),
+  provider: z.string().min(2).optional(),
+  oauth_id: z.string().min(1).optional(),
+  image: z.string().url().optional(),
+});
+
+export const authRegisterSchema = z
+  .object({
+    name: z.string().min(2),
+    email: z.string().email(),
+    password: z.string().min(6),
+    confirm_password: z.string().min(6),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+export const authForgotSchema = z.object({
+  email: z.string().email(),
+});
+
+export const authResetSchema = z
+  .object({
+    email: z.string().email(),
+    token: z.string().min(10),
+    password: z.string().min(6),
+    confirm_password: z.string().min(6),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+export const productCreateSchema = z.object({
+  name: z.string().min(2),
+  sku: z.string().min(1),
+  price: z.coerce.number().nonnegative(),
+  cost: z.coerce.number().nonnegative().optional(),
+  barcode: z.string().min(1).optional(),
+  gst_rate: z.coerce.number().nonnegative().optional(),
+  stock_on_hand: z.coerce.number().int().optional(),
+  reorder_level: z.coerce.number().int().optional(),
+  category_id: z.coerce.number().int().positive().optional(),
+});
+
+export const productUpdateSchema = productCreateSchema.partial();
+
+const invoiceItemSchema = z.object({
+  product_id: z.coerce.number().int().positive().optional(),
+  name: z.string().min(1),
+  quantity: z.coerce.number().int().positive(),
+  unit_price: z.coerce.number().nonnegative(),
+  tax_rate: z.coerce.number().nonnegative().optional(),
+});
+
+export const invoiceCreateSchema = z.object({
+  customer_id: z.coerce.number().int().positive(),
+  due_date: z.coerce.date().optional(),
+  status: z.nativeEnum(InvoiceStatus).optional(),
+  notes: z.string().optional(),
+  items: z.array(invoiceItemSchema).min(1),
+});
+
+export const invoiceUpdateSchema = z.object({
+  status: z.nativeEnum(InvoiceStatus).optional(),
+  due_date: z.coerce.date().optional(),
+  notes: z.string().optional(),
+});
+
+export const paymentCreateSchema = z.object({
+  invoice_id: z.coerce.number().int().positive(),
+  amount: z.coerce.number().nonnegative(),
+  method: z.nativeEnum(PaymentMethod).optional(),
+  reference: z.string().optional(),
+  paid_at: z.coerce.date().optional(),
+});
+
+const purchaseItemSchema = z.object({
+  product_id: z.coerce.number().int().positive(),
+  quantity: z.coerce.number().int().positive(),
+  unit_cost: z.coerce.number().nonnegative(),
+  tax_rate: z.coerce.number().nonnegative().optional(),
+});
+
+export const purchaseCreateSchema = z.object({
+  supplier_id: z.coerce.number().int().positive().optional(),
+  warehouse_id: z.coerce.number().int().positive().optional(),
+  purchase_date: z.coerce.date().optional(),
+  notes: z.string().optional(),
+  items: z.array(purchaseItemSchema).min(1),
+});
+
+export const purchaseUpdateSchema = z.object({
+  supplier_id: z.coerce.number().int().positive().optional(),
+  warehouse_id: z.coerce.number().int().positive().optional(),
+  purchase_date: z.coerce.date().optional(),
+  notes: z.string().optional(),
+  items: z.array(purchaseItemSchema).min(1),
+});
+
+const saleItemSchema = z.object({
+  product_id: z.coerce.number().int().positive(),
+  quantity: z.coerce.number().int().positive(),
+  unit_price: z.coerce.number().nonnegative(),
+  tax_rate: z.coerce.number().nonnegative().optional(),
+});
+
+export const saleCreateSchema = z.object({
+  customer_id: z.coerce.number().int().positive().optional(),
+  warehouse_id: z.coerce.number().int().positive().optional(),
+  sale_date: z.coerce.date().optional(),
+  status: z.nativeEnum(SaleStatus).optional(),
+  notes: z.string().optional(),
+  items: z.array(saleItemSchema).min(1),
+});
+
+export const saleUpdateSchema = z.object({
+  status: z.nativeEnum(SaleStatus).optional(),
+  notes: z.string().optional(),
+});
+
+export const warehouseCreateSchema = z.object({
+  name: z.string().min(2),
+  location: z.string().optional(),
+});
+
+export const warehouseUpdateSchema = warehouseCreateSchema.partial();
+
+export const inventoryQuerySchema = z.object({
+  warehouse_id: z.coerce.number().int().positive().optional(),
+});
+
+export const inventoryAdjustSchema = z.object({
+  warehouse_id: z.coerce.number().int().positive(),
+  product_id: z.coerce.number().int().positive(),
+  change: z.coerce.number().int(),
+  reason: z.nativeEnum(StockReason).optional(),
+  note: z.string().optional(),
+});
+
+export const stockAdjustSchema = z.object({
+  product_id: z.coerce.number().int().positive(),
+  warehouse_id: z.coerce.number().int().positive().optional(),
+  change: z.coerce.number().int(),
+  reason: z.nativeEnum(StockReason).optional(),
+  note: z.string().optional(),
+});

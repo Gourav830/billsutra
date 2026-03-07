@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "../providers/sessionProvider";
 import { Toaster } from "@/components/ui/sonner";
+import QueryProvider from "../providers/QueryProvider";
+import AuthTokenSync from "../providers/AuthTokenSync";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -26,12 +28,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <SessionProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          {children}
-          <Toaster richColors duration={10000} />
-        </body>
+        <QueryProvider>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <AuthTokenSync />
+            {children}
+            <Toaster richColors duration={10000} />
+          </body>
+        </QueryProvider>
       </SessionProvider>
     </html>
   );

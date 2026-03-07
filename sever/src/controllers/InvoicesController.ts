@@ -1,14 +1,15 @@
 import type { Request, Response } from "express";
 import prisma from "../config/db.config.js";
 import { InvoiceStatus } from "@prisma/client";
+import type { z } from "zod";
+import {
+  invoiceCreateSchema,
+  invoiceUpdateSchema,
+} from "../validations/apiValidations.js";
 
-interface InvoiceItemInput {
-  product_id?: number;
-  name: string;
-  quantity: number;
-  unit_price: number;
-  tax_rate?: number;
-}
+type InvoiceCreateInput = z.infer<typeof invoiceCreateSchema>;
+type InvoiceUpdateInput = z.infer<typeof invoiceUpdateSchema>;
+type InvoiceItemInput = InvoiceCreateInput["items"][number];
 
 class InvoicesController {
   static async index(req: Request, res: Response) {
@@ -32,24 +33,11 @@ class InvoicesController {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const body = req.body as {
-      customer_id?: number;
-      due_date?: string;
-      status?: InvoiceStatus;
-      notes?: string;
-      items?: InvoiceItemInput[];
-    };
-
-    if (!body.customer_id || !body.items || body.items.length === 0) {
-      return res.status(422).json({
-        message: "Customer and items are required",
-        errors: { customer_id: "Required", items: "Required" },
-      });
-    }
+    const body: InvoiceCreateInput = req.body;
 
     let subtotal = 0;
     let tax = 0;
-    const items = body.items.map((item) => {
+    const items = body.items.map((item: InvoiceItemInput) => {
       const lineSubtotal = item.quantity * item.unit_price;
       const lineTax = item.tax_rate ? (lineSubtotal * item.tax_rate) / 100 : 0;
       subtotal += lineSubtotal;
@@ -70,7 +58,7 @@ class InvoicesController {
       data: {
         user_id: userId,
         customer_id: body.customer_id,
-        due_date: body.due_date ? new Date(body.due_date) : undefined,
+        due_date: body.due_date ?? undefined,
         status: body.status ?? InvoiceStatus.DRAFT,
         subtotal,
         tax,
@@ -110,17 +98,14 @@ class InvoicesController {
     }
 
     const id = Number(req.params.id);
-    const { status, due_date, notes } = req.body as {
-      status?: InvoiceStatus;
-      due_date?: string;
-      notes?: string;
-    };
+    const body: InvoiceUpdateInput = req.body;
+    const { status, due_date, notes } = body;
 
     const updated = await prisma.invoice.updateMany({
       where: { id, user_id: userId },
       data: {
         status,
-        due_date: due_date ? new Date(due_date) : undefined,
+        due_date: due_date ?? undefined,
         notes,
       },
     });

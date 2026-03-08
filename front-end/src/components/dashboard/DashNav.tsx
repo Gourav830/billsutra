@@ -7,13 +7,16 @@ import ThemeToggle from "@/components/theme-toggle";
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Products", href: "/products" },
-  { label: "Customers", href: "/customers" },
+  { label: "Inventory", href: "/inventory" },
+  { label: "Warehouses", href: "/warehouses" },
+  { label: "Invoices", href: "/invoices" },
+  { label: "Clients", href: "/customers" },
   { label: "Suppliers", href: "/suppliers" },
   { label: "Purchases", href: "/purchases" },
   { label: "Sales", href: "/sales" },
-  { label: "Invoices", href: "/invoices" },
-  { label: "Warehouses", href: "/warehouses" },
-  { label: "Inventory", href: "/inventory" },
+  { label: "Templates", href: "/templates" },
+  { label: "Business Profile", href: "/business-profile" },
+  { label: "Settings", href: "/settings" },
 ];
 
 export default function DashNavbar({

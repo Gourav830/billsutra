@@ -91,6 +91,27 @@ export const userPasswordUpdateSchema = z
     path: ["confirm_password"],
   });
 
+export const businessProfileUpsertSchema = z.object({
+  business_name: z.string().min(2),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  website: z.string().optional(),
+  logo_url: z.string().url().optional(),
+  tax_id: z.string().optional(),
+  currency: z.string().min(1),
+  show_logo_on_invoice: z.boolean().optional(),
+  show_tax_number: z.boolean().optional(),
+  show_payment_qr: z.boolean().optional(),
+});
+
+export const userTemplateUpsertSchema = z.object({
+  template_id: z.coerce.number().int().positive(),
+  enabled_sections: z.array(z.string().min(1)).min(1),
+  theme_color: z.string().optional(),
+  section_order: z.array(z.string().min(1)).min(1),
+});
+
 export const productCreateSchema = z.object({
   name: z.string().min(2),
   sku: z.string().min(1),

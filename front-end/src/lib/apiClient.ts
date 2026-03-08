@@ -366,6 +366,57 @@ export type UpdatePasswordPayload = {
   confirm_password: string;
 };
 
+export type TemplateSectionRecord = {
+  id: number;
+  template_id: number;
+  section_key: string;
+  section_order: number;
+  is_default: boolean;
+};
+
+export type TemplateRecord = {
+  id: number;
+  name: string;
+  description?: string | null;
+  layout_config: {
+    primaryColor: string;
+    font: string;
+    tableStyle: "minimal" | "grid" | "modern";
+    layout: "stacked" | "split";
+  };
+  created_at: string;
+  sections?: TemplateSectionRecord[];
+};
+
+export type UserTemplateSetting = {
+  id: number;
+  user_id: number;
+  template_id: number;
+  enabled_sections: string[];
+  theme_color?: string | null;
+  section_order: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type BusinessProfileRecord = {
+  id: number;
+  user_id: number;
+  business_name: string;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  logo_url?: string | null;
+  tax_id?: string | null;
+  currency: string;
+  show_logo_on_invoice: boolean;
+  show_tax_number: boolean;
+  show_payment_qr: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export const fetchReportsSummary = async (): Promise<ReportsSummary> => {
   const response = await apiClient.get("/reports/summary");
   return response.data.data as ReportsSummary;
@@ -617,6 +668,49 @@ export const updateUserPassword = async (
   payload: UpdatePasswordPayload,
 ): Promise<void> => {
   await apiClient.put("/users/password", payload);
+};
+
+export const fetchTemplates = async (): Promise<TemplateRecord[]> => {
+  const response = await apiClient.get("/templates");
+  return response.data.data as TemplateRecord[];
+};
+
+export const fetchUserTemplates = async (): Promise<UserTemplateSetting[]> => {
+  const response = await apiClient.get("/user-template");
+  return response.data.data as UserTemplateSetting[];
+};
+
+export const saveUserTemplate = async (payload: {
+  template_id: number;
+  enabled_sections: string[];
+  theme_color?: string | null;
+  section_order: string[];
+}): Promise<UserTemplateSetting> => {
+  const response = await apiClient.post("/user-template", payload);
+  return response.data.data as UserTemplateSetting;
+};
+
+export const fetchBusinessProfile =
+  async (): Promise<BusinessProfileRecord | null> => {
+    const response = await apiClient.get("/business-profile");
+    return (response.data.data as BusinessProfileRecord | null) ?? null;
+  };
+
+export const saveBusinessProfile = async (payload: {
+  business_name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo_url?: string;
+  tax_id?: string;
+  currency: string;
+  show_logo_on_invoice?: boolean;
+  show_tax_number?: boolean;
+  show_payment_qr?: boolean;
+}): Promise<BusinessProfileRecord> => {
+  const response = await apiClient.post("/business-profile", payload);
+  return response.data.data as BusinessProfileRecord;
 };
 
 export default apiClient;

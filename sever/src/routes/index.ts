@@ -12,6 +12,9 @@ import SalesController from "../controllers/SalesController.js";
 import WarehousesController from "../controllers/WarehousesController.js";
 import InventoriesController from "../controllers/InventoriesController.js";
 import UsersController from "../controllers/UsersController.js";
+import BusinessProfileController from "../controllers/BusinessProfileController.js";
+import TemplatesController from "../controllers/TemplatesController.js";
+import UserTemplateController from "../controllers/UserTemplateController.js";
 import AuthMiddleware from "../middlewares/AuthMIddleware.js";
 import validate from "../middlewares/validate.js";
 import {
@@ -40,6 +43,8 @@ import {
   warehouseUpdateSchema,
   inventoryQuerySchema,
   inventoryAdjustSchema,
+  businessProfileUpsertSchema,
+  userTemplateUpsertSchema,
 } from "../validations/apiValidations.js";
 import invoiceRoutes from "../modules/invoice/invoice.routes.js";
 
@@ -112,6 +117,31 @@ router.put(
   AuthMiddleware,
   validate({ body: userPasswordUpdateSchema }),
   UsersController.updatePassword,
+);
+
+// Business profile
+router.get(
+  "/business-profile",
+  AuthMiddleware,
+  BusinessProfileController.index,
+);
+router.post(
+  "/business-profile",
+  AuthMiddleware,
+  validate({ body: businessProfileUpsertSchema }),
+  BusinessProfileController.store,
+);
+
+// Templates
+router.get("/templates", AuthMiddleware, TemplatesController.index);
+
+// User template settings
+router.get("/user-template", AuthMiddleware, UserTemplateController.index);
+router.post(
+  "/user-template",
+  AuthMiddleware,
+  validate({ body: userTemplateUpsertSchema }),
+  UserTemplateController.store,
 );
 
 // Categories

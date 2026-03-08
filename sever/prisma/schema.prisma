@@ -31,8 +31,74 @@ model User {
   invoices          Invoice[]
   payments          Payment[]
   resets            PasswordResetToken[]
+  business_profile  BusinessProfile?
+  user_templates    UserTemplate[]
 
   @@map("users")
+}
+
+model BusinessProfile {
+  id                   Int      @id @default(autoincrement())
+  user                 User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id              Int      @unique
+  business_name        String   @db.VarChar(191)
+  address              String?
+  phone                String?
+  email                String?
+  website              String?
+  logo_url             String?
+  tax_id               String?
+  currency             String   @default("INR") @db.VarChar(10)
+  show_logo_on_invoice Boolean  @default(true)
+  show_tax_number      Boolean  @default(true)
+  show_payment_qr      Boolean  @default(false)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  @@index([user_id])
+  @@map("business_profiles")
+}
+
+model Template {
+  id            Int               @id @default(autoincrement())
+  name          String            @db.VarChar(191)
+  description   String?
+  layout_config Json
+  created_at    DateTime          @default(now())
+  sections      TemplateSection[]
+  user_settings UserTemplate[]
+
+  @@map("templates")
+}
+
+model TemplateSection {
+  id            Int      @id @default(autoincrement())
+  template      Template @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  template_id   Int
+  section_key   String   @db.VarChar(120)
+  section_order Int
+  is_default    Boolean  @default(true)
+
+  @@index([template_id])
+  @@map("template_sections")
+}
+
+model UserTemplate {
+  id              Int      @id @default(autoincrement())
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id         Int
+  template        Template @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  template_id     Int
+  enabled_sections String[]
+  theme_color     String?
+  section_order   String[]
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@unique([user_id, template_id])
+  @@index([user_id])
+  @@index([template_id])
+  @@map("user_templates")
 }
 
 model Customer {

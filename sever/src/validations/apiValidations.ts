@@ -110,7 +110,30 @@ export const userTemplateUpsertSchema = z.object({
   enabled_sections: z.array(z.string().min(1)).min(1),
   theme_color: z.string().optional(),
   section_order: z.array(z.string().min(1)).min(1),
+  design_config: z.record(z.string(), z.unknown()).optional(),
 });
+
+export const userSavedTemplateCreateSchema = z.object({
+  name: z.string().min(2).max(191),
+  base_template_id: z.coerce.number().int().positive().optional(),
+  enabled_sections: z.array(z.string().min(1)).min(1),
+  section_order: z.array(z.string().min(1)).min(1),
+  theme_color: z.string().optional(),
+  design_config: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const userSavedTemplateUpdateSchema = z
+  .object({
+    name: z.string().min(2).max(191).optional(),
+    base_template_id: z.coerce.number().int().positive().optional(),
+    enabled_sections: z.array(z.string().min(1)).min(1).optional(),
+    section_order: z.array(z.string().min(1)).min(1).optional(),
+    theme_color: z.string().optional(),
+    design_config: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one field is required",
+  });
 
 export const productCreateSchema = z.object({
   name: z.string().min(2),

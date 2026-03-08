@@ -33,6 +33,7 @@ model User {
   resets            PasswordResetToken[]
   business_profile  BusinessProfile?
   user_templates    UserTemplate[]
+  user_saved_templates UserSavedTemplate[]
 
   @@map("users")
 }
@@ -67,6 +68,7 @@ model Template {
   created_at    DateTime          @default(now())
   sections      TemplateSection[]
   user_settings UserTemplate[]
+  user_saved_templates UserSavedTemplate[]
 
   @@map("templates")
 }
@@ -92,6 +94,7 @@ model UserTemplate {
   enabled_sections String[]
   theme_color     String?
   section_order   String[]
+  design_config   Json?
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
@@ -99,6 +102,25 @@ model UserTemplate {
   @@index([user_id])
   @@index([template_id])
   @@map("user_templates")
+}
+
+model UserSavedTemplate {
+  id               Int       @id @default(autoincrement())
+  user             User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id          Int
+  name             String    @db.VarChar(191)
+  base_template    Template? @relation(fields: [base_template_id], references: [id], onDelete: SetNull)
+  base_template_id Int?
+  enabled_sections String[]
+  section_order    String[]
+  theme_color      String?
+  design_config    Json?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@index([user_id])
+  @@index([base_template_id])
+  @@map("user_saved_templates")
 }
 
 model Customer {

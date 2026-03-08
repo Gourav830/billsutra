@@ -15,6 +15,7 @@ import UsersController from "../controllers/UsersController.js";
 import BusinessProfileController from "../controllers/BusinessProfileController.js";
 import TemplatesController from "../controllers/TemplatesController.js";
 import UserTemplateController from "../controllers/UserTemplateController.js";
+import UserSavedTemplateController from "../controllers/UserSavedTemplateController.js";
 import AuthMiddleware from "../middlewares/AuthMIddleware.js";
 import validate from "../middlewares/validate.js";
 import {
@@ -45,6 +46,8 @@ import {
   inventoryAdjustSchema,
   businessProfileUpsertSchema,
   userTemplateUpsertSchema,
+  userSavedTemplateCreateSchema,
+  userSavedTemplateUpdateSchema,
 } from "../validations/apiValidations.js";
 import invoiceRoutes from "../modules/invoice/invoice.routes.js";
 
@@ -142,6 +145,31 @@ router.post(
   AuthMiddleware,
   validate({ body: userTemplateUpsertSchema }),
   UserTemplateController.store,
+);
+
+// User saved templates CRUD
+router.get(
+  "/user-saved-templates",
+  AuthMiddleware,
+  UserSavedTemplateController.index,
+);
+router.post(
+  "/user-saved-templates",
+  AuthMiddleware,
+  validate({ body: userSavedTemplateCreateSchema }),
+  UserSavedTemplateController.store,
+);
+router.put(
+  "/user-saved-templates/:id",
+  AuthMiddleware,
+  validate({ params: idParamSchema, body: userSavedTemplateUpdateSchema }),
+  UserSavedTemplateController.update,
+);
+router.delete(
+  "/user-saved-templates/:id",
+  AuthMiddleware,
+  validate({ params: idParamSchema }),
+  UserSavedTemplateController.destroy,
 );
 
 // Categories

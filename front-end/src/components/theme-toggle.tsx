@@ -25,11 +25,21 @@ const ThemeToggle = () => {
     return <Laptop className="size-4" />;
   }, [theme]);
 
+  // Avoid SSR/CSR id mismatches from Radix internals by rendering
+  // the dropdown only after the component mounts on the client.
+  if (!mounted) {
+    return (
+      <Button variant="outline" size="icon" aria-label="Toggle theme" disabled>
+        <Laptop className="size-4" />
+      </Button>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" aria-label="Toggle theme">
-          {mounted ? icon : <Laptop className="size-4" />}
+          {icon}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-32">

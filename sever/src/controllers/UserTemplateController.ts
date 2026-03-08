@@ -18,7 +18,9 @@ class UserTemplateController {
 
     if (templateId) {
       const setting = await prisma.userTemplate.findUnique({
-        where: { user_id_template_id: { user_id: userId, template_id: templateId } },
+        where: {
+          user_id_template_id: { user_id: userId, template_id: templateId },
+        },
       });
       return res.status(200).json({ data: setting });
     }
@@ -47,6 +49,7 @@ class UserTemplateController {
         enabled_sections: body.enabled_sections,
         theme_color: body.theme_color,
         section_order: body.section_order,
+        design_config: body.design_config,
       },
       create: {
         user_id: userId,
@@ -54,6 +57,7 @@ class UserTemplateController {
         enabled_sections: body.enabled_sections,
         theme_color: body.theme_color,
         section_order: body.section_order,
+        design_config: body.design_config,
       },
     });
 

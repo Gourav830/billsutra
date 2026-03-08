@@ -1,8 +1,13 @@
 import type { InvoiceSectionProps } from "@/types/invoice-template";
+import { useSectionStyles } from "@/components/invoice/DesignConfigContext";
 
 const Footer = ({ data }: InvoiceSectionProps) => {
+  const { style } = useSectionStyles("footer");
   return (
-    <section className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-600">
+    <section
+      className="rounded-2xl border border-slate-200 text-sm"
+      style={style}
+    >
       <p>
         Thank you for choosing {data.business.businessName}. We appreciate your
         business.

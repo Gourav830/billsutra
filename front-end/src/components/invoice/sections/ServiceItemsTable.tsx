@@ -1,16 +1,18 @@
 import type { InvoiceSectionProps } from "@/types/invoice-template";
+import { useSectionStyles } from "@/components/invoice/DesignConfigContext";
 import { calculateTotals, formatCurrency } from "./utils";
 
 const ServiceItemsTable = ({ data, theme }: InvoiceSectionProps) => {
+  const { style } = useSectionStyles("service_items");
   const totals = calculateTotals(data.items);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white px-6 py-5">
+    <section className="rounded-2xl border border-slate-200" style={style}>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+        <p className="text-xs uppercase tracking-[0.25em] opacity-70">
           Service items
         </p>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm opacity-70">
           Subtotal: {formatCurrency(totals.subtotal, data.business.currency)}
         </p>
       </div>
@@ -25,12 +27,12 @@ const ServiceItemsTable = ({ data, theme }: InvoiceSectionProps) => {
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-semibold text-slate-900">{item.name}</p>
+                  <p className="font-semibold">{item.name}</p>
                   {item.description ? (
-                    <p className="text-xs text-slate-500">{item.description}</p>
+                    <p className="text-xs opacity-70">{item.description}</p>
                   ) : null}
                 </div>
-                <div className="text-right text-sm text-slate-600">
+                <div className="text-right text-sm opacity-80">
                   <p>Qty: {item.quantity}</p>
                   <p>
                     Rate:{" "}

@@ -395,6 +395,20 @@ export type UserTemplateSetting = {
   enabled_sections: string[];
   theme_color?: string | null;
   section_order: string[];
+  design_config?: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserSavedTemplateRecord = {
+  id: number;
+  user_id: number;
+  name: string;
+  base_template_id?: number | null;
+  enabled_sections: string[];
+  section_order: string[];
+  theme_color?: string | null;
+  design_config?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };
@@ -685,9 +699,48 @@ export const saveUserTemplate = async (payload: {
   enabled_sections: string[];
   theme_color?: string | null;
   section_order: string[];
+  design_config?: Record<string, unknown> | null;
 }): Promise<UserTemplateSetting> => {
   const response = await apiClient.post("/user-template", payload);
   return response.data.data as UserTemplateSetting;
+};
+
+export const fetchUserSavedTemplates = async (): Promise<
+  UserSavedTemplateRecord[]
+> => {
+  const response = await apiClient.get("/user-saved-templates");
+  return response.data.data as UserSavedTemplateRecord[];
+};
+
+export const createUserSavedTemplate = async (payload: {
+  name: string;
+  base_template_id?: number;
+  enabled_sections: string[];
+  section_order: string[];
+  theme_color?: string | null;
+  design_config?: Record<string, unknown> | null;
+}): Promise<UserSavedTemplateRecord> => {
+  const response = await apiClient.post("/user-saved-templates", payload);
+  return response.data.data as UserSavedTemplateRecord;
+};
+
+export const updateUserSavedTemplate = async (
+  id: number,
+  payload: {
+    name?: string;
+    base_template_id?: number;
+    enabled_sections?: string[];
+    section_order?: string[];
+    theme_color?: string | null;
+    design_config?: Record<string, unknown> | null;
+  },
+): Promise<UserSavedTemplateRecord> => {
+  const response = await apiClient.put(`/user-saved-templates/${id}`, payload);
+  return response.data.data as UserSavedTemplateRecord;
+};
+
+export const deleteUserSavedTemplate = async (id: number): Promise<void> => {
+  await apiClient.delete(`/user-saved-templates/${id}`);
 };
 
 export const fetchBusinessProfile =

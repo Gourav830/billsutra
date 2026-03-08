@@ -9,11 +9,11 @@ import axios, { AxiosError } from "axios";
 import { resetPassword } from "../lib/apiEndPoints";
 export async function registerAction(prevState: any, formdata: FormData) {
   try {
-    const data = await axios.post(REGISTER_URL, {
+    await axios.post(REGISTER_URL, {
       name: formdata.get("name"),
       email: formdata.get("email"),
       password: formdata.get("password"),
-      confirm_password: formdata.get("confirmpassword"),
+      confirm_password: formdata.get("confirm_password"),
     });
     return {
       status: 200,
@@ -106,10 +106,10 @@ export async function loginAction(prevState: any, formData: FormData) {
 
 export async function resetPasswordAction(prevState: any, formdata: FormData) {
   try {
-    const data = await axios.post(resetPassword, {
+    await axios.post(resetPassword, {
       email: formdata.get("email"),
       password: formdata.get("password"),
-      confirm_password: formdata.get("confirmpassword"),
+      confirm_password: formdata.get("confirm_password"),
       token: formdata.get("token"),
     });
     return {

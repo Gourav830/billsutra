@@ -16,6 +16,11 @@ import InvoiceDraftPanel from "@/components/invoice/InvoiceDraftPanel";
 import InvoiceDraftList from "@/components/invoice/InvoiceDraftList";
 import InvoiceActions from "@/components/invoice/InvoiceActions";
 import {
+  DesignConfigProvider,
+  type DesignConfig,
+  normalizeDesignConfig,
+} from "@/components/invoice/DesignConfigContext";
+import {
   fetchBusinessProfile,
   fetchTemplates,
   fetchUserTemplates,
@@ -229,6 +234,13 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
       primaryColor: selectedUserTemplate.theme_color,
     };
   }, [selectedTemplate, selectedUserTemplate]);
+
+  const activeDesignConfig = useMemo(() => {
+    return normalizeDesignConfig(
+      (selectedUserTemplate?.design_config as Partial<DesignConfig> | null) ??
+        null,
+    );
+  }, [selectedUserTemplate]);
 
   const parseServerErrors = (error: unknown, fallback: string) => {
     if (axios.isAxiosError(error)) {
@@ -491,6 +503,7 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
       enabled_sections: template.defaultSections,
       section_order: normalizedOrder,
       theme_color: template.theme.primaryColor,
+      design_config: selectedUserTemplate?.design_config ?? null,
     });
   };
 
@@ -511,6 +524,7 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
       enabled_sections: nextEnabled,
       section_order: nextOrder,
       theme_color: activeTheme.primaryColor,
+      design_config: selectedUserTemplate?.design_config ?? null,
     });
   };
 
@@ -651,12 +665,21 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
               </div>
             </div>
             <div className="printable">
-              <InvoiceRenderer
-                data={invoicePreviewData}
-                enabledSections={activeEnabledSections}
-                sectionOrder={activeSectionOrder}
-                theme={activeTheme}
-              />
+              <DesignConfigProvider
+                value={{
+                  designConfig: activeDesignConfig,
+                  updateSection: () => {},
+                  resetSection: () => {},
+                  resetAll: () => {},
+                }}
+              >
+                <InvoiceRenderer
+                  data={invoicePreviewData}
+                  enabledSections={activeEnabledSections}
+                  sectionOrder={activeSectionOrder}
+                  theme={activeTheme}
+                />
+              </DesignConfigProvider>
             </div>
 
             <InvoiceDraftPanel

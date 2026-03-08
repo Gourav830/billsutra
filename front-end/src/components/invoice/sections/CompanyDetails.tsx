@@ -1,23 +1,23 @@
 import type { InvoiceSectionProps } from "@/types/invoice-template";
+import { useSectionStyles } from "@/components/invoice/DesignConfigContext";
 
 const CompanyDetails = ({ data }: InvoiceSectionProps) => {
+  const { style } = useSectionStyles("company_details");
   const business = data.business;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white px-6 py-5">
-      <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+    <section className="rounded-2xl border border-slate-200" style={style}>
+      <p className="text-xs uppercase tracking-[0.25em] opacity-70">
         Company details
       </p>
-      <div className="mt-3 grid gap-2 text-sm text-slate-700">
-        <p className="text-base font-semibold text-slate-900">
-          {business.businessName}
-        </p>
+      <div className="mt-3 grid gap-2 text-sm">
+        <p className="text-base font-semibold">{business.businessName}</p>
         <p>{business.address}</p>
         <p>{business.phone}</p>
         <p>{business.email}</p>
         <p>{business.website}</p>
         {business.showTaxNumber && business.taxId ? (
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-xs uppercase tracking-[0.2em] opacity-70">
             Tax ID: {business.taxId}
           </p>
         ) : null}

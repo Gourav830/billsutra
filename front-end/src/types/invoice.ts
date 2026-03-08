@@ -96,5 +96,6 @@ export type InvoicePdfInput = {
   items: InvoicePdfItem[];
   totals: InvoicePdfTotals;
   taxMode: TaxMode;
+  themeColor?: string;
   fileName?: string;
 };

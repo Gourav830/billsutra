@@ -17,6 +17,8 @@ import {
   fetchUserTemplates,
   saveUserTemplate,
 } from "@/lib/apiClient";
+import { calculateTotals } from "@/components/invoice/sections/utils";
+import { useInvoicePdf } from "@/hooks/invoice/useInvoicePdf";
 
 const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
   const [businessTypeId, setBusinessTypeId] = useState("retail");
@@ -54,6 +56,8 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
     queryKey: ["user-templates"],
     queryFn: fetchUserTemplates,
   });
+
+  const { downloadPdf } = useInvoicePdf();
 
   const saveTemplateMutation = useMutation({
     mutationFn: saveUserTemplate,
@@ -279,6 +283,36 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
       },
     };
   }, [previewShowLogo]);
+
+  const buildPreviewPdfInput = () => {
+    const totals = calculateTotals(modalPreviewData.items);
+    return {
+      businessName: modalPreviewData.business.businessName,
+      invoiceNumber: modalPreviewData.invoiceNumber,
+      invoiceDate: modalPreviewData.invoiceDate,
+      customer: modalPreviewData.client,
+      items: modalPreviewData.items.map((item) => {
+        const lineSubtotal = item.quantity * item.unitPrice;
+        const lineTax = lineSubtotal * ((item.taxRate ?? 0) / 100);
+        return {
+          name: item.name,
+          quantity: item.quantity,
+          price: item.unitPrice,
+          tax_rate: item.taxRate ?? 0,
+          total: lineSubtotal + lineTax,
+        };
+      }),
+      totals: {
+        subtotal: totals.subtotal,
+        tax: totals.tax,
+        discount: 0,
+        total: totals.total,
+      },
+      taxMode: "CGST_SGST" as const,
+      themeColor: previewThemeColor,
+      fileName: `${previewTemplate?.name ?? "template"}-preview.pdf`,
+    };
+  };
 
   const cardPreviewData = useMemo(() => {
     return {
@@ -540,6 +574,13 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                 </h3>
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => downloadPdf(buildPreviewPdfInput())}
+                  className="rounded-full border border-[#eadfd3] px-4 py-2 text-xs font-semibold"
+                >
+                  Download PDF
+                </button>
                 <button
                   type="button"
                   onClick={async () => {

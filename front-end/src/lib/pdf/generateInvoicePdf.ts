@@ -4,6 +4,15 @@ import type { InvoicePdfInput } from "@/types/invoice";
 
 const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
 
+const hexToRgb = (value?: string): [number, number, number] | null => {
+  if (!value) return null;
+  const cleaned = value.replace("#", "");
+  if (cleaned.length !== 6) return null;
+  const num = Number.parseInt(cleaned, 16);
+  if (Number.isNaN(num)) return null;
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+};
+
 export const generateInvoicePdf = ({
   businessName,
   invoiceNumber,
@@ -12,6 +21,7 @@ export const generateInvoicePdf = ({
   items,
   totals,
   taxMode,
+  themeColor,
   fileName = "invoice.pdf",
 }: InvoicePdfInput) => {
   const pdf = new jsPDF({
@@ -22,7 +32,7 @@ export const generateInvoicePdf = ({
 
   const startX = 14;
   let cursorY = 18;
-  const accent: [number, number, number] = [138, 109, 86];
+  const accent = hexToRgb(themeColor) ?? [138, 109, 86];
   const text: [number, number, number] = [31, 27, 22];
   const soft: [number, number, number] = [249, 242, 234];
   const softAlt: [number, number, number] = [255, 250, 245];

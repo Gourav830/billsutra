@@ -1,10 +1,13 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { toast } from "sonner";
+import Link from "next/link";
 import DashNavbar from "@/components/dashboard/DashNav";
-import InvoiceTemplate from "@/components/invoice/InvoiceTemplate";
+import InvoiceRenderer from "@/components/invoice/InvoiceRenderer";
 import InvoiceForm from "@/components/invoice/InvoiceForm";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import InvoiceHeader from "@/components/invoice/InvoiceHeader";
@@ -12,6 +15,13 @@ import InvoiceTotals from "@/components/invoice/InvoiceTotals";
 import InvoiceDraftPanel from "@/components/invoice/InvoiceDraftPanel";
 import InvoiceDraftList from "@/components/invoice/InvoiceDraftList";
 import InvoiceActions from "@/components/invoice/InvoiceActions";
+import {
+  fetchBusinessProfile,
+  fetchTemplates,
+  fetchUserTemplates,
+  saveUserTemplate,
+} from "@/lib/apiClient";
+import { SECTION_LABELS, TEMPLATE_CATALOG } from "@/lib/invoiceTemplateData";
 import { useInvoiceTotals } from "@/hooks/invoice/useInvoiceTotals";
 import { useInvoiceValidation } from "@/hooks/invoice/useInvoiceValidation";
 import { useInvoiceDrafts } from "@/hooks/invoice/useInvoiceDrafts";
@@ -23,6 +33,7 @@ import type {
   InvoiceItemForm,
   TaxMode,
 } from "@/types/invoice";
+import type { InvoicePreviewData, SectionKey } from "@/types/invoice-template";
 import {
   useCreateInvoiceMutation,
   useCustomersQuery,
@@ -42,6 +53,27 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
   const { data: customers } = useCustomersQuery();
   const { data: products } = useProductsQuery();
   const { data: warehouses } = useWarehousesQuery();
+  const { data: templateRecords = [] } = useQuery({
+    queryKey: ["templates"],
+    queryFn: fetchTemplates,
+  });
+  const { data: userTemplateRecords = [] } = useQuery({
+    queryKey: ["user-templates"],
+    queryFn: fetchUserTemplates,
+  });
+  const { data: businessProfile } = useQuery({
+    queryKey: ["business-profile"],
+    queryFn: fetchBusinessProfile,
+  });
+  const saveTemplateMutation = useMutation({
+    mutationFn: saveUserTemplate,
+    onSuccess: () => {
+      toast.success("Template applied");
+    },
+    onError: () => {
+      toast.error("Unable to apply template");
+    },
+  });
   const createInvoice = useCreateInvoiceMutation();
   const { downloadPdf } = useInvoicePdf();
 
@@ -61,8 +93,142 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
   const [itemErrors, setItemErrors] = useState<InvoiceItemError[]>([]);
   const [summaryErrors, setSummaryErrors] = useState<string[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null,
+  );
+  const [hasManualTemplateSelection, setHasManualTemplateSelection] =
+    useState(false);
   const validation = useInvoiceValidation(form, items);
   const totals = useInvoiceTotals(items, form.discount, taxMode);
+  const knownSections = useMemo(
+    () => new Set<SectionKey>(Object.keys(SECTION_LABELS) as SectionKey[]),
+    [],
+  );
+  const normalizeSection = useCallback(
+    (section: string): SectionKey | null => {
+      return knownSections.has(section as SectionKey)
+        ? (section as SectionKey)
+        : null;
+    },
+    [knownSections],
+  );
+
+  const templatesFromApi = useMemo(() => {
+    if (!templateRecords.length) return null;
+
+    const mapFontFamily = (font: string) => {
+      const value = font.toLowerCase();
+      if (value.includes("sora")) return "var(--font-sora)";
+      if (value.includes("fraunces")) return "var(--font-fraunces)";
+      if (value.includes("mono")) return "var(--font-geist-mono)";
+      return "var(--font-geist-sans)";
+    };
+
+    return templateRecords.map((template) => {
+      const orderedSections = (template.sections ?? [])
+        .slice()
+        .sort((a, b) => a.section_order - b.section_order)
+        .map((section) => normalizeSection(section.section_key))
+        .filter((section): section is SectionKey => Boolean(section));
+      const defaultSections = (template.sections ?? [])
+        .filter((section) => section.is_default)
+        .sort((a, b) => a.section_order - b.section_order)
+        .map((section) => normalizeSection(section.section_key))
+        .filter((section): section is SectionKey => Boolean(section));
+
+      return {
+        id: String(template.id),
+        name: template.name,
+        description: template.description ?? "",
+        layout: template.layout_config.layout,
+        defaultSections: defaultSections.length
+          ? defaultSections
+          : orderedSections,
+        theme: {
+          primaryColor: template.layout_config.primaryColor,
+          fontFamily: mapFontFamily(template.layout_config.font),
+          tableStyle: template.layout_config.tableStyle,
+        },
+        sectionOrder: orderedSections.length
+          ? orderedSections
+          : defaultSections,
+      };
+    });
+  }, [templateRecords, normalizeSection]);
+
+  const templates = templatesFromApi ?? TEMPLATE_CATALOG;
+  const activeUserTemplate = useMemo(() => {
+    if (!userTemplateRecords.length) return null;
+    return [...userTemplateRecords].sort((a, b) => {
+      return (
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+    })[0];
+  }, [userTemplateRecords]);
+
+  const activeTemplate = useMemo(() => {
+    if (activeUserTemplate) {
+      return (
+        templates.find(
+          (template) => Number(template.id) === activeUserTemplate.template_id,
+        ) ?? templates[0]
+      );
+    }
+    return templates[0];
+  }, [activeUserTemplate, templates]);
+
+  useEffect(() => {
+    if (hasManualTemplateSelection) return;
+    if (activeTemplate) {
+      setSelectedTemplateId(activeTemplate.id);
+    }
+  }, [activeTemplate, hasManualTemplateSelection]);
+
+  const selectedTemplate = useMemo(() => {
+    if (!selectedTemplateId) return activeTemplate;
+    return (
+      templates.find((template) => template.id === selectedTemplateId) ??
+      activeTemplate
+    );
+  }, [activeTemplate, selectedTemplateId, templates]);
+
+  const selectedUserTemplate = useMemo(() => {
+    if (!selectedTemplateId) return null;
+    const selectedId = Number(selectedTemplateId);
+    if (!selectedId || Number.isNaN(selectedId)) return null;
+    return (
+      userTemplateRecords.find((item) => item.template_id === selectedId) ??
+      null
+    );
+  }, [selectedTemplateId, userTemplateRecords]);
+
+  const activeEnabledSections = useMemo(() => {
+    if (!selectedUserTemplate) return selectedTemplate.defaultSections;
+    const normalized = selectedUserTemplate.enabled_sections
+      .map((section) => normalizeSection(section))
+      .filter((section): section is SectionKey => Boolean(section));
+    return normalized.length ? normalized : selectedTemplate.defaultSections;
+  }, [selectedTemplate, selectedUserTemplate, normalizeSection]);
+
+  const activeSectionOrder = useMemo(() => {
+    if (!selectedUserTemplate) {
+      return selectedTemplate.sectionOrder ?? selectedTemplate.defaultSections;
+    }
+    const normalized = selectedUserTemplate.section_order
+      .map((section) => normalizeSection(section))
+      .filter((section): section is SectionKey => Boolean(section));
+    return normalized.length
+      ? normalized
+      : (selectedTemplate.sectionOrder ?? selectedTemplate.defaultSections);
+  }, [selectedTemplate, selectedUserTemplate, normalizeSection]);
+
+  const activeTheme = useMemo(() => {
+    if (!selectedUserTemplate?.theme_color) return selectedTemplate.theme;
+    return {
+      ...selectedTemplate.theme,
+      primaryColor: selectedUserTemplate.theme_color,
+    };
+  }, [selectedTemplate, selectedUserTemplate]);
 
   const parseServerErrors = (error: unknown, fallback: string) => {
     if (axios.isAxiosError(error)) {
@@ -120,6 +286,50 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
         : new Date().toLocaleDateString("en-IN"),
     [form.date],
   );
+
+  const dueDate = useMemo(() => {
+    if (form.due_date) {
+      return new Date(form.due_date).toLocaleDateString("en-IN");
+    }
+    return invoiceDate;
+  }, [form.due_date, invoiceDate]);
+
+  const invoicePreviewData: InvoicePreviewData = useMemo(() => {
+    const businessName = businessProfile?.business_name || "BillSutra";
+    return {
+      invoiceNumber: "INV-NEW",
+      invoiceDate,
+      dueDate,
+      business: {
+        businessName,
+        address: businessProfile?.address ?? "",
+        phone: businessProfile?.phone ?? "",
+        email: businessProfile?.email ?? "",
+        website: businessProfile?.website ?? "",
+        logoUrl: businessProfile?.logo_url ?? "",
+        taxId: businessProfile?.tax_id ?? "",
+        currency: businessProfile?.currency ?? "INR",
+        showLogoOnInvoice: businessProfile?.show_logo_on_invoice ?? false,
+        showTaxNumber: businessProfile?.show_tax_number ?? false,
+        showPaymentQr: businessProfile?.show_payment_qr ?? false,
+      },
+      client: {
+        name: customer?.name ?? "Customer",
+        email: customer?.email ?? "",
+        phone: customer?.phone ?? "",
+        address: customer?.address ?? "",
+      },
+      items: items.map((item) => ({
+        name: item.name || "Item",
+        description: "",
+        quantity: Number(item.quantity) || 0,
+        unitPrice: Number(item.price) || 0,
+        taxRate: item.tax_rate ? Number(item.tax_rate) : 0,
+      })),
+      notes: form.notes || "",
+      paymentInfo: "",
+    };
+  }, [businessProfile, customer, dueDate, form.notes, invoiceDate, items]);
 
   const handleLoadDraft = useCallback((draft: InvoiceDraft) => {
     setForm({
@@ -242,7 +452,7 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
 
   const handleDownloadPdf = useCallback(() => {
     downloadPdf({
-      businessName: "BillSutra",
+      businessName: businessProfile?.business_name || "BillSutra",
       invoiceNumber: "INV-NEW",
       invoiceDate,
       customer: customer
@@ -256,8 +466,53 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
       items: templateItems,
       totals,
       taxMode,
+      themeColor: activeTheme.primaryColor,
     });
-  }, [customer, downloadPdf, invoiceDate, taxMode, templateItems, totals]);
+  }, [
+    activeTheme.primaryColor,
+    businessProfile,
+    customer,
+    downloadPdf,
+    invoiceDate,
+    taxMode,
+    templateItems,
+    totals,
+  ]);
+
+  const handleTemplateSelect = async (templateId: string) => {
+    const template = templates.find((item) => item.id === templateId);
+    if (!template) return;
+    setSelectedTemplateId(templateId);
+    setHasManualTemplateSelection(true);
+
+    const normalizedOrder = template.sectionOrder ?? template.defaultSections;
+    await saveTemplateMutation.mutateAsync({
+      template_id: Number(templateId),
+      enabled_sections: template.defaultSections,
+      section_order: normalizedOrder,
+      theme_color: template.theme.primaryColor,
+    });
+  };
+
+  const handleSectionToggle = async (section: SectionKey) => {
+    const templateIdNumber = Number(selectedTemplate.id);
+    if (!templateIdNumber || Number.isNaN(templateIdNumber)) return;
+
+    const isEnabled = activeEnabledSections.includes(section);
+    const nextEnabled = isEnabled
+      ? activeEnabledSections.filter((item) => item !== section)
+      : [...activeEnabledSections, section];
+    const nextOrder = isEnabled
+      ? activeSectionOrder.filter((item) => item !== section)
+      : [...activeSectionOrder, section];
+
+    await saveTemplateMutation.mutateAsync({
+      template_id: templateIdNumber,
+      enabled_sections: nextEnabled,
+      section_order: nextOrder,
+      theme_color: activeTheme.primaryColor,
+    });
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -339,19 +594,68 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
           </div>
 
           <aside className="grid gap-4 lg:sticky lg:top-8">
+            <div className="no-print rounded-2xl border border-[#ecdccf] bg-white p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Invoice template</h3>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-[#8a6d56]">
+                  {selectedTemplate.name}
+                </span>
+              </div>
+              <label className="mt-3 block text-xs text-[#8a6d56]">
+                Choose template
+                <select
+                  value={selectedTemplate.id}
+                  onChange={(event) => handleTemplateSelect(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-[#eadfd3] bg-white px-3 py-2 text-sm"
+                >
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#5c4b3b]">
+                <span>Theme color: {activeTheme.primaryColor}</span>
+                <Link
+                  href="/templates"
+                  className="rounded-full border border-[#eadfd3] px-3 py-1 text-[11px] font-semibold text-[#1f1b16]"
+                >
+                  Manage templates
+                </Link>
+              </div>
+            </div>
+            <div className="no-print rounded-2xl border border-[#ecdccf] bg-white p-4">
+              <h3 className="text-sm font-semibold">Sections</h3>
+              <div className="mt-3 grid gap-2 text-sm">
+                {activeSectionOrder.map((section) => (
+                  <label
+                    key={section}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-[#eadfd3] px-3 py-2"
+                  >
+                    <span>{SECTION_LABELS[section]}</span>
+                    <div className="flex items-center gap-2">
+                      {saveTemplateMutation.isPending ? (
+                        <span className="h-3 w-3 animate-spin rounded-full border border-[#d6c8b8] border-t-transparent" />
+                      ) : null}
+                      <input
+                        type="checkbox"
+                        checked={activeEnabledSections.includes(section)}
+                        onChange={() => handleSectionToggle(section)}
+                        disabled={saveTemplateMutation.isPending}
+                        className="h-4 w-4 rounded border-[#d6c8b8] text-primary disabled:opacity-60"
+                      />
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
             <div className="printable">
-              <InvoiceTemplate
-                logoUrl={undefined}
-                businessName="BillSutra"
-                invoiceNumber="INV-NEW"
-                invoiceDate={invoiceDate}
-                customerName={customer?.name ?? "Customer"}
-                customerEmail={customer?.email ?? null}
-                customerPhone={customer?.phone ?? null}
-                customerAddress={customer?.address ?? null}
-                items={templateItems}
-                totals={totals}
-                gstMode={taxMode}
+              <InvoiceRenderer
+                data={invoicePreviewData}
+                enabledSections={activeEnabledSections}
+                sectionOrder={activeSectionOrder}
+                theme={activeTheme}
               />
             </div>
 

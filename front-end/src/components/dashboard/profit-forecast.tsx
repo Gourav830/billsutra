@@ -18,6 +18,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
+const formatTooltipValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return formatTooltipValue(value[0]);
+  }
+
+  if (typeof value === "number") {
+    return formatCurrency(value);
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return formatCurrency(Number.isFinite(parsed) ? parsed : 0);
+  }
+
+  return formatCurrency(0);
+};
+
 const ProfitForecast = () => {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["dashboard", "forecast"],
@@ -95,7 +112,7 @@ const ProfitForecast = () => {
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
                       <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value) => formatTooltipValue(value)}
                       />
                       <Area
                         type="monotone"
@@ -135,9 +152,7 @@ const ProfitForecast = () => {
                     <CartesianGrid stroke="#f2e6dc" strokeDasharray="3 3" />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                    />
+                    <Tooltip formatter={(value) => formatTooltipValue(value)} />
                     <Line
                       type="monotone"
                       dataKey="forecast"

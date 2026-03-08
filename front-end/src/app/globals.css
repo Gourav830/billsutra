@@ -125,6 +125,49 @@
   }
 }
 
+@layer utilities {
+  .dark .bg-white,
+  .dark .bg-white\/90,
+  .dark .bg-white\/80,
+  .dark .bg-white\/70 {
+    background-color: var(--card);
+  }
+
+  .dark .bg-\[\#f7f2ea\],
+  .dark .bg-\[\#f7f3ee\] {
+    background-color: var(--background);
+  }
+
+  .dark .bg-\[\#fff9f2\],
+  .dark .bg-\[\#fff7ef\],
+  .dark .bg-\[\#fffaf5\],
+  .dark .bg-\[\#fff5ea\],
+  .dark .bg-\[\#fdf7f1\],
+  .dark .bg-\[\#fff2e5\] {
+    background-color: var(--card);
+  }
+
+  .dark .text-\[\#1f1b16\] {
+    color: var(--foreground);
+  }
+
+  .dark .text-\[\#5c4b3b\],
+  .dark .text-\[\#8a6d56\],
+  .dark .text-\[\#b45309\] {
+    color: var(--muted-foreground);
+  }
+
+  .dark .border-\[\#ecdccf\],
+  .dark .border-\[\#f2e6dc\],
+  .dark .border-\[\#e4d6ca\],
+  .dark .border-\[\#e8d9cc\],
+  .dark .border-\[\#f0e2d6\],
+  .dark .border-\[\#eadacc\],
+  .dark .border-\[\#f5d0b5\] {
+    border-color: var(--border);
+  }
+}
+
 @media print {
   @page {
     size: A4;

@@ -2,20 +2,20 @@ import Link from "next/link";
 
 const Footer = () => {
   return (
-    <footer className="border-t border-black/5 bg-[#f7f2ea] py-12 text-[#1f1b16] dark:border-white/10 dark:bg-slate-950 dark:text-white">
+    <footer className="border-t border-border bg-background py-12 text-foreground">
       <div className="mx-auto w-full max-w-6xl px-6">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <div className="text-lg font-semibold">BillSutra</div>
-            <p className="mt-2 text-sm text-[#5c4b3b] dark:text-slate-300">
+            <p className="mt-2 text-sm text-muted-foreground">
               Business management built for small teams.
             </p>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Product
             </p>
-            <ul className="mt-3 space-y-2 text-sm text-[#5c4b3b] dark:text-slate-300">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link href="#features">Features</Link>
               </li>
@@ -28,10 +28,10 @@ const Footer = () => {
             </ul>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Company
             </p>
-            <ul className="mt-3 space-y-2 text-sm text-[#5c4b3b] dark:text-slate-300">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link href="#about">About</Link>
               </li>
@@ -44,10 +44,10 @@ const Footer = () => {
             </ul>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Resources
             </p>
-            <ul className="mt-3 space-y-2 text-sm text-[#5c4b3b] dark:text-slate-300">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link href="#docs">Documentation</Link>
               </li>
@@ -60,10 +60,10 @@ const Footer = () => {
             </ul>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Legal
             </p>
-            <ul className="mt-3 space-y-2 text-sm text-[#5c4b3b] dark:text-slate-300">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link href="#privacy">Privacy</Link>
               </li>
@@ -73,7 +73,7 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        <div className="mt-10 border-t border-black/5 pt-6 text-sm text-[#8a6d56] dark:border-white/10">
+        <div className="mt-10 border-t border-border pt-6 text-sm text-muted-foreground">
           (c) 2026 BillSutra. All rights reserved.
         </div>
       </div>

@@ -1,15 +1,15 @@
 const PricingPlaceholder = () => {
   return (
-    <section id="pricing" className="bg-white py-16 dark:bg-slate-950">
+    <section id="pricing" className="bg-background py-16">
       <div className="mx-auto w-full max-w-6xl px-6">
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#8a6d56] dark:text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
             Pricing
           </p>
-          <h2 className="text-3xl font-semibold text-[#1f1b16] dark:text-white">
+          <h2 className="text-3xl font-semibold">
             Simple plans for growing teams
           </h2>
-          <p className="text-sm text-[#5c4b3b] dark:text-slate-300">
+          <p className="text-sm text-muted-foreground">
             Talk to us for the plan that fits your business size.
           </p>
         </div>
@@ -25,12 +25,12 @@ const PricingPlaceholder = () => {
           ].map((tier) => (
             <div
               key={tier.name}
-              className="rounded-2xl border border-[#f2e6dc] bg-[#fff9f2] px-5 py-6 text-sm text-[#5c4b3b] dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
+              className="rounded-2xl border border-border bg-card px-5 py-6 text-sm text-muted-foreground"
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 {tier.name}
               </p>
-              <p className="mt-2 text-2xl font-semibold text-[#1f1b16] dark:text-white">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {tier.price}
               </p>
               <p className="mt-2">{tier.desc}</p>

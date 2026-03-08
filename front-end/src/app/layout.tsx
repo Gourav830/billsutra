@@ -5,6 +5,7 @@ import SessionProvider from "../providers/sessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "../providers/QueryProvider";
 import AuthTokenSync from "../providers/AuthTokenSync";
+import ThemeProvider from "@/components/theme-provider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -39,17 +40,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <SessionProvider>
-        <QueryProvider>
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} ${fraunces.variable} antialiased`}
-          >
-            <AuthTokenSync />
-            {children}
-            <Toaster richColors duration={10000} />
-          </body>
-        </QueryProvider>
-      </SessionProvider>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} ${fraunces.variable} bg-background text-foreground antialiased transition-colors duration-300`}
+      >
+        <ThemeProvider>
+          <SessionProvider>
+            <QueryProvider>
+              <AuthTokenSync />
+              {children}
+              <Toaster richColors duration={10000} />
+            </QueryProvider>
+          </SessionProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

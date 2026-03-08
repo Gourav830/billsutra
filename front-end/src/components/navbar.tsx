@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/theme-toggle";
 import { Hexagon } from "lucide-react";
 
 const navItems = [
@@ -11,23 +12,23 @@ const navItems = [
 
 const Navbar = () => {
   return (
-    <header className="sticky top-0 z-50 border-b border-black/5 bg-[#f7f2ea]/80 backdrop-blur dark:border-white/10 dark:bg-slate-950/80">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-sm">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
             <Hexagon size={18} />
           </span>
-          <span className="text-lg font-semibold tracking-tight text-[#1f1b16] dark:text-white">
+          <span className="text-lg font-semibold tracking-tight">
             BillSutra
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm text-[#5c4b3b] dark:text-slate-300 md:flex">
+        <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="hover:text-[#b45309]"
+              className="hover:text-foreground"
             >
               {item.label}
             </Link>
@@ -35,12 +36,13 @@ const Navbar = () => {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button asChild variant="outline" className="hidden md:inline-flex">
+          <ThemeToggle />
+          <Button asChild className="hidden md:inline-flex">
             <Link href="/register">Get Started</Link>
           </Button>
           <Button
             asChild
-            className="bg-[#1f1b16] text-white hover:bg-[#2c2520]"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Link href="/register">Get Started</Link>
           </Button>

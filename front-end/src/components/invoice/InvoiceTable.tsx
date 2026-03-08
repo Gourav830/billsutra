@@ -1,25 +1,8 @@
 "use client";
-
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-export type InvoiceItemForm = {
-  product_id: string;
-  name: string;
-  quantity: string;
-  price: string;
-  tax_rate: string;
-};
-
-export type InvoiceItemError = {
-  product_id?: string;
-  name?: string;
-  quantity?: string;
-  price?: string;
-  tax_rate?: string;
-};
+import type { InvoiceItemError, InvoiceItemForm } from "@/types/invoice";
 
 export type InvoiceTableProps = {
   items: InvoiceItemForm[];

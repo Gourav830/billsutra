@@ -31,6 +31,23 @@ const chartColors = ["#f97316", "#0f766e", "#f59e0b", "#1e293b", "#fb7185"];
 
 const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
+const formatTooltipValue = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return formatTooltipValue(value[0]);
+  }
+
+  if (typeof value === "number") {
+    return formatCurrency(value);
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return formatCurrency(Number.isFinite(parsed) ? parsed : 0);
+  }
+
+  return formatCurrency(0);
+};
+
 const SalesChart = () => {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["dashboard", "sales"],
@@ -65,7 +82,7 @@ const SalesChart = () => {
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value) => formatTooltipValue(value)}
                       />
                       <Line
                         type="monotone"
@@ -89,7 +106,7 @@ const SalesChart = () => {
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip
-                        formatter={(value: number) => formatCurrency(value)}
+                        formatter={(value) => formatTooltipValue(value)}
                       />
                       <Line
                         type="monotone"
@@ -121,9 +138,7 @@ const SalesChart = () => {
                   <CartesianGrid stroke="#f2e6dc" strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
+                  <Tooltip formatter={(value) => formatTooltipValue(value)} />
                   <Legend />
                   <Bar dataKey="sales" fill="#f97316" radius={[6, 6, 0, 0]} />
                   <Bar
@@ -160,9 +175,7 @@ const SalesChart = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
+                  <Tooltip formatter={(value) => formatTooltipValue(value)} />
                   <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
               </ResponsiveContainer>

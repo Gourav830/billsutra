@@ -1,23 +1,9 @@
 import React from "react";
-
-export type InvoiceTemplateItem = {
-  id?: number;
-  name: string;
-  quantity: number;
-  price: number;
-  tax_rate?: number | null;
-  total: number;
-};
-
-export type InvoiceTemplateTotals = {
-  subtotal: number;
-  tax: number;
-  discount?: number;
-  total: number;
-  cgst?: number;
-  sgst?: number;
-  igst?: number;
-};
+import type {
+  InvoiceTemplateItem,
+  InvoiceTemplateTotals,
+  TaxMode,
+} from "@/types/invoice";
 
 export type InvoiceTemplateProps = {
   logoUrl?: string;
@@ -30,7 +16,7 @@ export type InvoiceTemplateProps = {
   customerAddress?: string | null;
   items: InvoiceTemplateItem[];
   totals: InvoiceTemplateTotals;
-  gstMode: "CGST_SGST" | "IGST" | "NONE";
+  gstMode: TaxMode;
 };
 
 const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
@@ -67,7 +53,7 @@ const InvoiceTemplate = ({
             <p className="text-xs uppercase tracking-[0.3em] text-[#8a6d56]">
               Invoice
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight font-[family:var(--font-fraunces),serif]">
+            <h2 className="mt-2 text-3xl tracking-tight font-[var(--font-fraunces),serif]">
               {businessName}
             </h2>
           </div>

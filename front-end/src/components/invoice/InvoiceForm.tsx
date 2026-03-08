@@ -1,21 +1,10 @@
 "use client";
 
-import React from "react";
+import type { FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-
-export type TaxMode = "CGST_SGST" | "IGST" | "NONE";
-
-export type InvoiceFormState = {
-  customer_id: string;
-  date: string;
-  due_date: string;
-  discount: string;
-  notes: string;
-  sync_sales: boolean;
-  warehouse_id?: string;
-};
+import type { InvoiceFormState, TaxMode } from "@/types/invoice";
 
 export type InvoiceFormProps = {
   form: InvoiceFormState;
@@ -24,7 +13,7 @@ export type InvoiceFormProps = {
   taxMode: TaxMode;
   onFormChange: (next: InvoiceFormState) => void;
   onTaxModeChange: (mode: TaxMode) => void;
-  onSubmit: (event: React.FormEvent) => void;
+  onSubmit: (event: FormEvent) => void;
   isSubmitting?: boolean;
   summaryErrors: string[];
   serverError?: string | null;

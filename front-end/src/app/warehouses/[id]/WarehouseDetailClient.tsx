@@ -116,23 +116,23 @@ const WarehouseDetailClient = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1b16]">
+    <div className="min-h-screen bg-background text-foreground">
       <DashNavbar name={name} image={image} />
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex flex-col gap-2">
-          <Link href="/warehouses" className="text-sm text-[#b45309]">
+          <Link href="/warehouses" className="text-sm text-primary">
             ← Back to warehouses
           </Link>
           <h1 className="text-3xl font-black">{data?.name ?? "Warehouse"}</h1>
-          <p className="max-w-2xl text-base text-[#5c4b3b]">
+          <p className="max-w-2xl text-base text-muted-foreground">
             {data?.location ?? "Location not set"}
           </p>
         </div>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-          <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold">Quick adjust</h2>
-            <p className="text-sm text-[#8a6d56]">
+            <p className="text-sm text-muted-foreground">
               Apply a stock change directly to this warehouse.
             </p>
             <form className="mt-4 grid gap-4" onSubmit={handleAdjust}>
@@ -140,7 +140,7 @@ const WarehouseDetailClient = ({
                 <Label htmlFor="product_select">Product</Label>
                 <select
                   id="product_select"
-                  className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={form.product_id}
                   onChange={(event) => {
                     setForm((prev) => ({
@@ -159,7 +159,7 @@ const WarehouseDetailClient = ({
                   ))}
                 </select>
                 {fieldErrors.product_id && (
-                  <p className="text-xs text-[#b45309]">
+                  <p className="text-xs text-destructive">
                     {fieldErrors.product_id}
                   </p>
                 )}
@@ -181,14 +181,16 @@ const WarehouseDetailClient = ({
                   placeholder="Use negative values to remove stock"
                 />
                 {fieldErrors.change && (
-                  <p className="text-xs text-[#b45309]">{fieldErrors.change}</p>
+                  <p className="text-xs text-destructive">
+                    {fieldErrors.change}
+                  </p>
                 )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="reason">Reason</Label>
                 <select
                   id="reason"
-                  className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
                   value={form.reason}
                   onChange={(event) =>
                     setForm((prev) => ({
@@ -217,36 +219,38 @@ const WarehouseDetailClient = ({
               </div>
               <Button
                 type="submit"
-                className="bg-[#1f1b16] text-white hover:bg-[#2c2520]"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={adjustInventory.isPending}
               >
                 Apply adjustment
               </Button>
               {(adjustInventory.isError || serverError) && (
-                <p className="text-sm text-[#b45309]">
+                <p className="text-sm text-destructive">
                   {serverError ?? "Unable to adjust inventory right now."}
                 </p>
               )}
             </form>
           </div>
 
-          <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold">Stock left</h2>
-                <p className="text-sm text-[#8a6d56]">
+                <p className="text-sm text-muted-foreground">
                   Remaining stock by product for this warehouse.
                 </p>
               </div>
-              <div className="text-sm text-[#5c4b3b]">
+              <div className="text-sm text-muted-foreground">
                 {inventories ? `${stockItems.length} items` : ""}
               </div>
             </div>
             {(isLoading || isLoadingInventory) && (
-              <p className="text-sm text-[#8a6d56]">Loading inventory...</p>
+              <p className="text-sm text-muted-foreground">
+                Loading inventory...
+              </p>
             )}
             {(isError || isInventoryError) && (
-              <p className="text-sm text-[#b45309]">
+              <p className="text-sm text-destructive">
                 Failed to load inventory.
               </p>
             )}
@@ -255,7 +259,7 @@ const WarehouseDetailClient = ({
               !isLoadingInventory &&
               !isInventoryError &&
               (!inventories || stockItems.length === 0) && (
-                <p className="text-sm text-[#8a6d56]">
+                <p className="text-sm text-muted-foreground">
                   No items stored here yet.
                 </p>
               )}
@@ -269,17 +273,17 @@ const WarehouseDetailClient = ({
                   {stockItems.map((item) => (
                     <div
                       key={item.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#f2e6dc] bg-[#fff9f2] px-4 py-3"
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
                     >
                       <div>
                         <p className="text-base font-semibold">
                           {item.product.name} • {item.product.sku}
                         </p>
-                        <p className="text-xs text-[#8a6d56]">
+                        <p className="text-xs text-muted-foreground">
                           Stock left: {item.quantity}
                         </p>
                       </div>
-                      <div className="text-sm text-[#5c4b3b]">
+                      <div className="text-sm text-muted-foreground">
                         Reorder level: {item.product.reorder_level}
                       </div>
                     </div>

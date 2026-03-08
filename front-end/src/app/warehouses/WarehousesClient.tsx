@@ -135,23 +135,23 @@ const WarehousesClient = ({ name, image }: WarehousesClientProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1b16]">
+    <div className="min-h-screen bg-background text-foreground">
       <DashNavbar name={name} image={image} />
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
         <div className="flex flex-col gap-2">
-          <p className="text-sm uppercase tracking-[0.2em] text-[#8a6d56]">
+          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
             Storage
           </p>
           <h1 className="text-3xl font-black">Warehouses</h1>
-          <p className="max-w-2xl text-base text-[#5c4b3b]">
+          <p className="max-w-2xl text-base text-muted-foreground">
             Monitor warehouse footprints and available stock at a glance.
           </p>
         </div>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-          <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold">Create warehouse</h2>
-            <p className="text-sm text-[#8a6d56]">
+            <p className="text-sm text-muted-foreground">
               Add storage locations before stocking inventory.
             </p>
             <form className="mt-4 grid gap-4" onSubmit={handleCreate}>
@@ -167,7 +167,7 @@ const WarehousesClient = ({ name, image }: WarehousesClientProps) => {
                   }}
                 />
                 {fieldErrors.name && (
-                  <p className="text-xs text-[#b45309]">{fieldErrors.name}</p>
+                  <p className="text-xs text-destructive">{fieldErrors.name}</p>
                 )}
               </div>
               <div className="grid gap-2">
@@ -187,42 +187,46 @@ const WarehousesClient = ({ name, image }: WarehousesClientProps) => {
               </div>
               <Button
                 type="submit"
-                className="bg-[#1f1b16] text-white hover:bg-[#2c2520]"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={createWarehouse.isPending}
               >
                 Add warehouse
               </Button>
               {(createWarehouse.isError || serverError) && (
-                <p className="text-sm text-[#b45309]">
+                <p className="text-sm text-destructive">
                   {serverError ?? "Unable to create warehouse right now."}
                 </p>
               )}
             </form>
           </div>
 
-          <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-6">
+          <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="text-lg font-semibold">Warehouse list</h2>
-            <p className="text-sm text-[#8a6d56]">
+            <p className="text-sm text-muted-foreground">
               Keep locations organized and ready for stock moves.
             </p>
             <div className="mt-4">
               {isLoading && (
-                <p className="text-sm text-[#8a6d56]">Loading warehouses...</p>
+                <p className="text-sm text-muted-foreground">
+                  Loading warehouses...
+                </p>
               )}
               {isError && (
-                <p className="text-sm text-[#b45309]">
+                <p className="text-sm text-destructive">
                   Failed to load warehouses.
                 </p>
               )}
               {!isLoading && !isError && data && data.length === 0 && (
-                <p className="text-sm text-[#8a6d56]">No warehouses yet.</p>
+                <p className="text-sm text-muted-foreground">
+                  No warehouses yet.
+                </p>
               )}
               {!isLoading && !isError && data && data.length > 0 && (
                 <div className="grid gap-3">
                   {data.map((warehouse) => (
                     <div
                       key={warehouse.id}
-                      className="rounded-xl border border-[#f2e6dc] bg-[#fff9f2] px-4 py-3"
+                      className="rounded-xl border border-border bg-muted px-4 py-3"
                     >
                       {editingId === warehouse.id ? (
                         <form className="grid gap-3" onSubmit={handleEditSave}>
@@ -253,7 +257,7 @@ const WarehousesClient = ({ name, image }: WarehousesClientProps) => {
                           <div className="flex flex-wrap gap-2">
                             <Button
                               type="submit"
-                              className="bg-[#1f1b16] text-white hover:bg-[#2c2520]"
+                              className="bg-primary text-primary-foreground hover:bg-primary/90"
                             >
                               Save
                             </Button>
@@ -272,14 +276,14 @@ const WarehousesClient = ({ name, image }: WarehousesClientProps) => {
                             <p className="text-base font-semibold">
                               {warehouse.name}
                             </p>
-                            <p className="text-xs text-[#8a6d56]">
+                            <p className="text-xs text-muted-foreground">
                               {warehouse.location ?? "Location not set"}
                             </p>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             <Link
                               href={`/warehouses/${warehouse.id}`}
-                              className="text-sm text-[#b45309]"
+                              className="text-sm text-primary"
                             >
                               View stock →
                             </Link>

@@ -194,20 +194,49 @@ const BusinessProfileClient = ({
               Set up your billing profile
             </h1>
           </div>
-          <div className="flex gap-2 text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
-            {steps.map((step) => (
-              <span
-                key={step.id}
-                className={`rounded-full border px-3 py-1 ${
-                  currentStep === step.id
-                    ? "border-primary text-primary"
-                    : "border-border"
-                }`}
-              >
-                {step.label}
-              </span>
-            ))}
-          </div>
+          <ol className="grid w-full gap-2 text-xs sm:w-auto sm:grid-cols-3 sm:gap-3">
+            {steps.map((step) => {
+              const isActive = currentStep === step.id;
+              const isCompleted = currentStep > step.id;
+
+              return (
+                <li
+                  key={step.id}
+                  aria-current={isActive ? "step" : undefined}
+                  className={`flex min-w-[165px] items-center gap-2 rounded-xl border px-3 py-2 transition sm:min-w-[180px] ${
+                    isActive
+                      ? "border-primary bg-primary/10"
+                      : isCompleted
+                        ? "border-emerald-200 bg-emerald-50/70"
+                        : "border-border bg-white"
+                  }`}
+                >
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : isCompleted
+                          ? "bg-emerald-600 text-white"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {step.id}
+                  </span>
+                  <span
+                    className={`font-medium uppercase tracking-[0.12em] ${
+                      isActive
+                        ? "text-primary"
+                        : isCompleted
+                          ? "text-emerald-700"
+                          : "text-[#8a6d56]"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
         </header>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">

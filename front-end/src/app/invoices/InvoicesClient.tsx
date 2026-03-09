@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import Link from "next/link";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import InvoiceRenderer from "@/components/invoice/InvoiceRenderer";
 import InvoiceForm from "@/components/invoice/InvoiceForm";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
@@ -575,11 +575,13 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(80%_60%_at_8%_8%,#fff2e5_0%,transparent_60%),radial-gradient(70%_55%_at_90%_0%,#f7e3cf_0%,transparent_55%),#f7f3ee] text-[#1f1b16] font-[var(--font-sora),var(--font-geist-sans)]">
-      <div className="no-print">
-        <DashNavbar name={name} image={image} />
-      </div>
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Create invoice"
+      subtitle="Build GST-ready invoices with live totals, customer details, and preview-ready layouts for printing."
+    >
+      <div className="mx-auto w-full max-w-7xl font-[var(--font-sora),var(--font-geist-sans)]">
         <InvoiceHeader isDirty={isDirty} lastSavedAt={lastSavedAt} />
 
         <section className="mt-8 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
@@ -608,19 +610,19 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
           </div>
 
           <aside className="grid gap-4 lg:sticky lg:top-8">
-            <div className="no-print rounded-2xl border border-[#ecdccf] bg-white p-4">
+            <div className="no-print rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Invoice template</h3>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-[#8a6d56]">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500">
                   {selectedTemplate.name}
                 </span>
               </div>
-              <label className="mt-3 block text-xs text-[#8a6d56]">
+              <label className="mt-3 block text-xs text-gray-500">
                 Choose template
                 <select
                   value={selectedTemplate.id}
                   onChange={(event) => handleTemplateSelect(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-[#eadfd3] bg-white px-3 py-2 text-sm"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-800"
                 >
                   {templates.map((template) => (
                     <option key={template.id} value={template.id}>
@@ -629,23 +631,23 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
                   ))}
                 </select>
               </label>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#5c4b3b]">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
                 <span>Theme color: {activeTheme.primaryColor}</span>
                 <Link
                   href="/templates"
-                  className="rounded-full border border-[#eadfd3] px-3 py-1 text-[11px] font-semibold text-[#1f1b16]"
+                  className="rounded-full border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
                   Manage templates
                 </Link>
               </div>
             </div>
-            <div className="no-print rounded-2xl border border-[#ecdccf] bg-white p-4">
+            <div className="no-print rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <h3 className="text-sm font-semibold">Sections</h3>
               <div className="mt-3 grid gap-2 text-sm">
                 {activeSectionOrder.map((section) => (
                   <label
                     key={section}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-[#eadfd3] px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-3 py-2 dark:border-gray-700"
                   >
                     <span>{SECTION_LABELS[section]}</span>
                     <div className="flex items-center gap-2">
@@ -695,8 +697,10 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
               onDeleteDraft={deleteDraft}
             />
             <InvoiceTotals totals={totals} taxMode={taxMode} />
-            <div className="no-print rounded-2xl border border-[#ecdccf] bg-[#fff5ea] p-6 text-sm text-[#5c4b3b]">
-              <p className="font-semibold text-[#1f1b16]">GST note</p>
+            <div className="no-print rounded-xl border border-gray-200 bg-gray-50 p-6 text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                GST note
+              </p>
               <p className="mt-2">
                 Choose CGST + SGST for intra-state invoices and IGST for
                 inter-state billing. Use “No GST” for exempt invoices.
@@ -708,8 +712,8 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
             />
           </aside>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import axios from "axios";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -274,9 +274,13 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1b16]">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Sales"
+      subtitle="Track outgoing invoices and realized revenue."
+    >
+      <div className="mx-auto w-full max-w-6xl">
         <div className="flex flex-col gap-2">
           <p className="text-sm uppercase tracking-[0.2em] text-[#8a6d56]">
             Billing
@@ -732,8 +736,8 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
             </div>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

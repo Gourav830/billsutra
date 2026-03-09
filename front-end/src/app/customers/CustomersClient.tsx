@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,14 +85,17 @@ const CustomersClient = ({ name, image }: CustomersClientProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1b16]">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Customers"
+      subtitle="Keep contact details and recent activity handy."
+    >
+      <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col gap-2">
           <p className="text-sm uppercase tracking-[0.2em] text-[#8a6d56]">
             Relationships
           </p>
-          <h1 className="text-3xl font-black">Customers</h1>
           <p className="max-w-2xl text-base text-[#5c4b3b]">
             Keep contact details and recent activity handy.
           </p>
@@ -302,8 +305,8 @@ const CustomersClient = ({ name, image }: CustomersClientProps) => {
             </div>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

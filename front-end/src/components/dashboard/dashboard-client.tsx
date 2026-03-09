@@ -3,7 +3,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardOverview } from "@/lib/apiClient";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MetricCard from "@/components/dashboard/metric-card";
 import SalesChart from "@/components/dashboard/sales-chart";
 import ProfitForecast from "@/components/dashboard/profit-forecast";
@@ -41,15 +41,18 @@ const DashboardClient = ({ name, image }: DashboardClientProps) => {
   const invoiceStats = data?.invoiceStats;
 
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1b16]">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title={`Welcome back, ${name}.`}
+      subtitle="A clean snapshot of revenue, cash flow, inventory health, and customer momentum."
+    >
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
+          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
             Business analytics
           </p>
-          <h1 className="text-3xl font-semibold">Welcome back, {name}.</h1>
-          <p className="max-w-2xl text-sm text-[#5c4b3b]">
+          <p className="max-w-2xl text-sm text-gray-500">
             A clean snapshot of revenue, cash flow, inventory health, and
             customer momentum.
           </p>
@@ -118,8 +121,8 @@ const DashboardClient = ({ name, image }: DashboardClientProps) => {
           <div className="grid gap-4">
             <CashFlowChart />
             {invoiceStats && (
-              <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-5">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
                   Invoice statistics
                 </p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -131,12 +134,12 @@ const DashboardClient = ({ name, image }: DashboardClientProps) => {
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="rounded-xl border border-[#f2e6dc] bg-[#fff9f2] p-4"
+                      className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900"
                     >
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
+                      <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
                         {item.label}
                       </p>
-                      <p className="mt-3 text-lg font-semibold text-[#1f1b16]">
+                      <p className="mt-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {item.value}
                       </p>
                     </div>
@@ -154,18 +157,18 @@ const DashboardClient = ({ name, image }: DashboardClientProps) => {
 
         <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
           <ActivityTimeline />
-          <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
               Empty states
             </p>
-            <p className="mt-3 text-sm text-[#5c4b3b]">
+            <p className="mt-3 text-sm text-gray-500">
               This panel intentionally reserves space for future widgets or
               notes.
             </p>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

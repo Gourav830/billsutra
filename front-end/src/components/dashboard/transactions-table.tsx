@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardTransactions } from "@/lib/apiClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 type TransactionRow = {
   date: string;
@@ -46,9 +47,19 @@ const columns: ColumnDef<TransactionRow>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => (
-      <span className="rounded-full border border-[#eadacc] bg-[#fff7ef] px-2 py-1 text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
+      <Badge
+        variant={
+          row.original.status.toLowerCase() === "paid"
+            ? "paid"
+            : row.original.status.toLowerCase() === "pending"
+              ? "pending"
+              : row.original.status.toLowerCase() === "overdue"
+                ? "overdue"
+                : "default"
+        }
+      >
         {row.original.status}
-      </span>
+      </Badge>
     ),
   },
 ];
@@ -68,22 +79,22 @@ const TransactionsTable = () => {
   });
 
   return (
-    <Card className="border-[#ecdccf] bg-white/90">
+    <Card className="rounded-xl border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <CardHeader>
         <CardTitle className="text-lg">Recent transactions</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading && (
-          <div className="h-32 rounded-xl bg-[#fdf7f1] animate-pulse" />
+          <div className="h-32 animate-pulse rounded-xl bg-gray-100 dark:bg-gray-700" />
         )}
         {isError && (
-          <p className="text-sm text-[#b45309]">Unable to load transactions.</p>
+          <p className="text-sm text-red-600">Unable to load transactions.</p>
         )}
         {!isLoading && !isError && (
           <>
-            <div className="overflow-hidden rounded-xl border border-[#f2e6dc]">
+            <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="min-w-full text-sm">
-                <thead className="bg-[#fff7ef]">
+                <thead className="bg-gray-100 dark:bg-gray-700/50">
                   {table.getHeaderGroups().map((headerGroup) => (
                     <tr key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
@@ -102,9 +113,12 @@ const TransactionsTable = () => {
                     </tr>
                   ))}
                 </thead>
-                <tbody className="divide-y divide-[#f2e6dc]">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {table.getRowModel().rows.map((row) => (
-                    <tr key={row.id}>
+                    <tr
+                      key={row.id}
+                      className="transition-colors odd:bg-white even:bg-gray-50/70 hover:bg-indigo-50/60 dark:odd:bg-gray-800 dark:even:bg-gray-800/70 dark:hover:bg-indigo-500/10"
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <td key={cell.id} className="px-4 py-3">
                           {flexRender(
@@ -119,7 +133,7 @@ const TransactionsTable = () => {
               </table>
             </div>
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-[#8a6d56]">
+              <p className="text-sm text-gray-500">
                 Page {table.getState().pagination.pageIndex + 1} of{" "}
                 {table.getPageCount()}
               </p>

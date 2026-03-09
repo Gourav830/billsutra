@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronDown, GripVertical } from "lucide-react";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import InvoiceRenderer from "@/components/invoice/InvoiceRenderer";
 import {
   DesignConfigProvider,
@@ -895,9 +895,13 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#f6f1ea] text-[#1f1b16]">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Templates"
+      subtitle="Customize invoice sections, styling, and reusable layouts."
+    >
+      <div className="mx-auto w-full max-w-6xl">
         <div
           className={`grid gap-8 ${
             openLivePreview
@@ -917,7 +921,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
               </p>
             </header>
 
-            <div className="rounded-3xl border border-[#eadfd3] bg-white p-6">
+            <div className="rounded-3xl border border-border bg-white p-6">
               <button
                 type="button"
                 onClick={() => setOpenBusinessType((prev) => !prev)}
@@ -941,7 +945,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                       className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${
                         businessTypeId === type.id
                           ? "border-primary bg-primary/5 text-primary"
-                          : "border-[#eadfd3] text-[#5c4b3b] hover:border-primary/50"
+                          : "border-border text-[#5c4b3b] hover:border-primary/50"
                       }`}
                     >
                       {type.label}
@@ -951,7 +955,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
               ) : null}
             </div>
 
-            <div className="rounded-3xl border border-[#eadfd3] bg-white p-6">
+            <div className="rounded-3xl border border-border bg-white p-6">
               <button
                 type="button"
                 onClick={() => setOpenCustomize((prev) => !prev)}
@@ -976,7 +980,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 transition ${
                           draggedSection === section
                             ? "border-primary/60 bg-primary/5"
-                            : "border-[#eadfd3]"
+                            : "border-border"
                         }`}
                       >
                         <label className="flex items-center gap-3 text-sm">
@@ -984,7 +988,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             type="button"
                             draggable
                             onDragStart={() => handleDragStart(section)}
-                            className="rounded-full border border-[#eadfd3] bg-white p-1 text-[#8a6d56] hover:text-primary"
+                            className="rounded-full border border-border bg-white p-1 text-[#8a6d56] hover:text-primary"
                             aria-label="Drag to reorder"
                           >
                             <GripVertical size={14} />
@@ -1001,14 +1005,14 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                           <button
                             type="button"
                             onClick={() => moveSection(section, "up")}
-                            className="rounded-full border border-[#eadfd3] px-3 py-1"
+                            className="rounded-full border border-border px-3 py-1"
                           >
                             Move up
                           </button>
                           <button
                             type="button"
                             onClick={() => moveSection(section, "down")}
-                            className="rounded-full border border-[#eadfd3] px-3 py-1"
+                            className="rounded-full border border-border px-3 py-1"
                           >
                             Move down
                           </button>
@@ -1026,7 +1030,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                           onChange={(event) =>
                             setThemeColor(event.target.value)
                           }
-                          className="h-9 w-9 rounded border border-[#eadfd3]"
+                          className="h-9 w-9 rounded border border-border"
                         />
                       </label>
                       <div className="flex flex-wrap items-center gap-2">
@@ -1049,12 +1053,12 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             setThemeHexInput(event.target.value)
                           }
                           placeholder="#2563eb"
-                          className="w-28 rounded-lg border border-[#eadfd3] px-2 py-1 text-xs uppercase"
+                          className="w-28 rounded-lg border border-border px-2 py-1 text-xs uppercase"
                         />
                         <button
                           type="button"
                           onClick={applyThemeHexInput}
-                          className="rounded-full border border-[#eadfd3] px-3 py-1 text-xs"
+                          className="rounded-full border border-border px-3 py-1 text-xs"
                         >
                           Apply
                         </button>
@@ -1084,7 +1088,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
               ) : null}
             </div>
 
-            <div className="rounded-3xl border border-[#eadfd3] bg-white p-6">
+            <div className="rounded-3xl border border-border bg-white p-6">
               <button
                 type="button"
                 onClick={() => setOpenDesignPanel((prev) => !prev)}
@@ -1109,7 +1113,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         className={`rounded-2xl border px-3 py-2 text-left text-xs transition ${
                           activeDesignSection === section
                             ? "border-primary bg-primary/5 text-primary"
-                            : "border-[#eadfd3] text-[#5c4b3b] hover:border-primary/50"
+                            : "border-border text-[#5c4b3b] hover:border-primary/50"
                         }`}
                       >
                         {SECTION_LABELS[section]}
@@ -1128,7 +1132,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                               backgroundColor: event.target.value,
                             })
                           }
-                          className="h-9 w-9 rounded border border-[#eadfd3]"
+                          className="h-9 w-9 rounded border border-border"
                         />
                       </label>
                       <div className="flex flex-wrap items-center gap-2">
@@ -1155,7 +1159,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             setBackgroundHexInput(event.target.value)
                           }
                           placeholder="#ffffff"
-                          className="w-28 rounded-lg border border-[#eadfd3] px-2 py-1 text-xs uppercase"
+                          className="w-28 rounded-lg border border-border px-2 py-1 text-xs uppercase"
                         />
                         <button
                           type="button"
@@ -1165,7 +1169,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                               backgroundHexInput,
                             )
                           }
-                          className="rounded-full border border-[#eadfd3] px-3 py-1 text-xs"
+                          className="rounded-full border border-border px-3 py-1 text-xs"
                         >
                           Apply
                         </button>
@@ -1182,7 +1186,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                               textColor: event.target.value,
                             })
                           }
-                          className="h-9 w-9 rounded border border-[#eadfd3]"
+                          className="h-9 w-9 rounded border border-border"
                         />
                       </label>
                       <div className="flex flex-wrap items-center gap-2">
@@ -1209,14 +1213,14 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             setTextHexInput(event.target.value)
                           }
                           placeholder="#334155"
-                          className="w-28 rounded-lg border border-[#eadfd3] px-2 py-1 text-xs uppercase"
+                          className="w-28 rounded-lg border border-border px-2 py-1 text-xs uppercase"
                         />
                         <button
                           type="button"
                           onClick={() =>
                             applySectionHexInput("textColor", textHexInput)
                           }
-                          className="rounded-full border border-[#eadfd3] px-3 py-1 text-xs"
+                          className="rounded-full border border-border px-3 py-1 text-xs"
                         >
                           Apply
                         </button>
@@ -1231,7 +1235,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             fontFamily: event.target.value,
                           })
                         }
-                        className="rounded-xl border border-[#eadfd3] px-3 py-2 text-sm"
+                        className="rounded-xl border border-border px-3 py-2 text-sm"
                       >
                         {FONT_OPTIONS.map((font) => (
                           <option key={font.value} value={font.value}>
@@ -1311,7 +1315,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             width: event.target.value as "contained" | "full",
                           })
                         }
-                        className="rounded-xl border border-[#eadfd3] px-3 py-2 text-sm"
+                        className="rounded-xl border border-border px-3 py-2 text-sm"
                       >
                         <option value="contained">Contained</option>
                         <option value="full">Full width</option>
@@ -1336,7 +1340,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             backgroundImage: "",
                           })
                         }
-                        className="rounded-full border border-[#eadfd3] px-3 py-2 text-xs"
+                        className="rounded-full border border-border px-3 py-2 text-xs"
                       >
                         Remove background image
                       </button>
@@ -1346,7 +1350,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         type="button"
                         onClick={handleCreateSavedTemplate}
                         disabled={createSavedTemplateMutation.isPending}
-                        className="rounded-full border border-[#eadfd3] px-3 py-2"
+                        className="rounded-full border border-border px-3 py-2"
                       >
                         {createSavedTemplateMutation.isPending
                           ? "Saving template..."
@@ -1355,14 +1359,14 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                       <button
                         type="button"
                         onClick={() => resetDesignSection(activeDesignSection)}
-                        className="rounded-full border border-[#eadfd3] px-3 py-2"
+                        className="rounded-full border border-border px-3 py-2"
                       >
                         Reset section
                       </button>
                       <button
                         type="button"
                         onClick={resetAllDesign}
-                        className="rounded-full border border-[#eadfd3] px-3 py-2"
+                        className="rounded-full border border-border px-3 py-2"
                       >
                         Reset all
                       </button>
@@ -1376,7 +1380,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                       <button
                         type="button"
                         onClick={handleLoadDesignConfig}
-                        className="rounded-full border border-[#eadfd3] px-3 py-2"
+                        className="rounded-full border border-border px-3 py-2"
                       >
                         Load design
                       </button>
@@ -1388,7 +1392,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
           </section>
 
           <section
-            className={`flex h-full flex-col rounded-3xl border border-[#eadfd3] bg-white ${
+            className={`flex h-full flex-col rounded-3xl border border-border bg-white ${
               openLivePreview ? "p-6" : "p-3"
             }`}
             style={openLivePreview ? undefined : { width: "64px" }}
@@ -1424,13 +1428,13 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
               ) : null}
             </div>
             {openLivePreview ? (
-              <div className="mt-5 flex-1 overflow-auto rounded-3xl border border-[#eadfd3] bg-[#fffaf5] p-4">
+              <div className="mt-5 flex-1 overflow-auto rounded-3xl border border-border bg-muted/40 p-4">
                 <div
                   ref={livePreviewRef}
                   className="mx-auto w-full max-w-[520px]"
                 >
                   <div
-                    className="mx-auto origin-top-left rounded-2xl border border-[#eadfd3] bg-white shadow-sm"
+                    className="mx-auto origin-top-left rounded-2xl border border-border bg-white shadow-sm"
                     style={{
                       width: A4_WIDTH,
                       height: A4_HEIGHT,
@@ -1454,7 +1458,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
           </section>
         </div>
 
-        <section className="mt-8 rounded-3xl border border-[#eadfd3] bg-white p-6">
+        <section className="mt-8 rounded-3xl border border-border bg-white p-6">
           <button
             type="button"
             onClick={() => setOpenTemplateSelection((prev) => !prev)}
@@ -1484,7 +1488,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                     type="button"
                     onClick={handleCreateSavedTemplate}
                     disabled={createSavedTemplateMutation.isPending}
-                    className="rounded-full border border-[#eadfd3] px-3 py-1 text-[11px] font-semibold"
+                    className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold"
                   >
                     {createSavedTemplateMutation.isPending
                       ? "Saving..."
@@ -1499,7 +1503,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                       setSavedTemplateSearch(event.target.value)
                     }
                     placeholder="Search saved templates"
-                    className="rounded-xl border border-[#eadfd3] px-3 py-2 text-sm"
+                    className="rounded-xl border border-border px-3 py-2 text-sm"
                   />
                   <select
                     value={savedTemplateFilter}
@@ -1508,7 +1512,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         event.target.value as "all" | "current-template",
                       )
                     }
-                    className="rounded-xl border border-[#eadfd3] px-3 py-2 text-sm"
+                    className="rounded-xl border border-border px-3 py-2 text-sm"
                   >
                     <option value="all">All templates</option>
                     <option value="current-template">Current base</option>
@@ -1519,7 +1523,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                     {filteredUserSavedTemplates.map((savedTemplate) => (
                       <div
                         key={`saved-${savedTemplate.id}`}
-                        className="rounded-2xl border border-[#eadfd3] bg-[#fffaf5] px-4 py-4"
+                        className="rounded-2xl border border-border bg-muted/40 px-4 py-4"
                       >
                         <p className="text-sm font-semibold">
                           {savedTemplate.name}
@@ -1542,7 +1546,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                               handleUpdateSavedTemplate(savedTemplate.id)
                             }
                             disabled={updateSavedTemplateMutation.isPending}
-                            className="rounded-full border border-[#eadfd3] px-3 py-1 text-[11px]"
+                            className="rounded-full border border-border px-3 py-1 text-[11px]"
                           >
                             Update
                           </button>
@@ -1552,7 +1556,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                               handleRenameSavedTemplate(savedTemplate)
                             }
                             disabled={updateSavedTemplateMutation.isPending}
-                            className="rounded-full border border-[#eadfd3] px-3 py-1 text-[11px]"
+                            className="rounded-full border border-border px-3 py-1 text-[11px]"
                           >
                             Rename
                           </button>
@@ -1590,7 +1594,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         className={`rounded-2xl border px-4 py-4 text-left transition ${
                           selectedTemplateId === template.id
                             ? "border-primary bg-primary/5"
-                            : "border-[#eadfd3] hover:border-primary/50"
+                            : "border-border hover:border-primary/50"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -1614,7 +1618,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             </span>
                           ) : null}
                         </div>
-                        <div className="mt-4 h-60 overflow-hidden rounded-2xl border border-[#f1e6da] bg-[#fffaf5] p-3">
+                        <div className="mt-4 h-60 overflow-hidden rounded-2xl border border-[#f1e6da] bg-muted/40 p-3">
                           <div
                             className="pointer-events-none origin-top-left"
                             style={{
@@ -1623,7 +1627,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                               transform: "scale(0.26)",
                             }}
                           >
-                            <div className="h-full w-full rounded-2xl border border-[#eadfd3] bg-white p-4">
+                            <div className="h-full w-full rounded-2xl border border-border bg-white p-4">
                               <MemoInvoiceRenderer
                                 data={cardPreviewData}
                                 enabledSections={template.defaultSections}
@@ -1637,7 +1641,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                           <button
                             type="button"
                             onClick={() => openPreview(template.id)}
-                            className="rounded-full border border-[#eadfd3] px-4 py-2 text-xs font-semibold"
+                            className="rounded-full border border-border px-4 py-2 text-xs font-semibold"
                           >
                             Preview
                           </button>
@@ -1665,7 +1669,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                       className={`rounded-2xl border px-4 py-4 text-left transition ${
                         selectedTemplateId === template.id
                           ? "border-primary bg-primary/5"
-                          : "border-[#eadfd3] hover:border-primary/50"
+                          : "border-border hover:border-primary/50"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -1689,7 +1693,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                           </span>
                         ) : null}
                       </div>
-                      <div className="mt-4 h-60 overflow-hidden rounded-2xl border border-[#f1e6da] bg-[#fffaf5] p-3">
+                      <div className="mt-4 h-60 overflow-hidden rounded-2xl border border-[#f1e6da] bg-muted/40 p-3">
                         <div
                           className="pointer-events-none origin-top-left"
                           style={{
@@ -1698,7 +1702,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             transform: "scale(0.26)",
                           }}
                         >
-                          <div className="h-full w-full rounded-2xl border border-[#eadfd3] bg-white p-4">
+                          <div className="h-full w-full rounded-2xl border border-border bg-white p-4">
                             <MemoInvoiceRenderer
                               data={cardPreviewData}
                               enabledSections={template.defaultSections}
@@ -1712,7 +1716,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         <button
                           type="button"
                           onClick={() => openPreview(template.id)}
-                          className="rounded-full border border-[#eadfd3] px-4 py-2 text-xs font-semibold"
+                          className="rounded-full border border-border px-4 py-2 text-xs font-semibold"
                         >
                           Preview
                         </button>
@@ -1731,11 +1735,11 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
             </>
           ) : null}
         </section>
-      </main>
+      </div>
       {previewTemplate ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8">
           <div className="flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white text-[#1f1b16] shadow-2xl">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#eadfd3] px-6 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
                   Template preview
@@ -1748,7 +1752,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                 <button
                   type="button"
                   onClick={() => downloadPdf(buildPreviewPdfInput())}
-                  className="rounded-full border border-[#eadfd3] px-4 py-2 text-xs font-semibold"
+                  className="rounded-full border border-border px-4 py-2 text-xs font-semibold"
                 >
                   Download PDF
                 </button>
@@ -1785,7 +1789,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                 <button
                   type="button"
                   onClick={closePreview}
-                  className="rounded-full border border-[#eadfd3] px-4 py-2 text-xs font-semibold"
+                  className="rounded-full border border-border px-4 py-2 text-xs font-semibold"
                 >
                   Close
                 </button>
@@ -1793,7 +1797,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
             </div>
             <div className="grid flex-1 gap-6 overflow-y-auto px-6 py-6 lg:grid-cols-[0.4fr_0.6fr]">
               <div className="space-y-5">
-                <div className="rounded-2xl border border-[#eadfd3] bg-[#fffaf5] p-4">
+                <div className="rounded-2xl border border-border bg-muted/40 p-4">
                   <h4 className="text-sm font-semibold">Preview settings</h4>
                   <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
                     <label className="flex items-center gap-2">
@@ -1804,7 +1808,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         onChange={(event) =>
                           setPreviewThemeColor(event.target.value)
                         }
-                        className="h-9 w-9 rounded border border-[#eadfd3]"
+                        className="h-9 w-9 rounded border border-border"
                       />
                     </label>
                     <label className="flex items-center gap-2">
@@ -1818,7 +1822,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                     </label>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-[#eadfd3] bg-white p-4">
+                <div className="rounded-2xl border border-border bg-white p-4">
                   <h4 className="text-sm font-semibold">Sections</h4>
                   <div className="mt-3 grid gap-2 text-sm">
                     {previewSectionOrder.map((section) => (
@@ -1829,7 +1833,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                         className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-3 py-2 transition ${
                           draggedPreviewSection === section
                             ? "border-primary/60 bg-primary/5"
-                            : "border-[#eadfd3]"
+                            : "border-border"
                         }`}
                       >
                         <label className="flex items-center gap-3">
@@ -1837,7 +1841,7 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             type="button"
                             draggable
                             onDragStart={() => handlePreviewDragStart(section)}
-                            className="rounded-full border border-[#eadfd3] bg-white p-1 text-[#8a6d56] hover:text-primary"
+                            className="rounded-full border border-border bg-white p-1 text-[#8a6d56] hover:text-primary"
                             aria-label="Drag to reorder"
                           >
                             <GripVertical size={14} />
@@ -1863,14 +1867,14 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                           <button
                             type="button"
                             onClick={() => movePreviewSection(section, "up")}
-                            className="rounded-full border border-[#eadfd3] px-2 py-1"
+                            className="rounded-full border border-border px-2 py-1"
                           >
                             Up
                           </button>
                           <button
                             type="button"
                             onClick={() => movePreviewSection(section, "down")}
-                            className="rounded-full border border-[#eadfd3] px-2 py-1"
+                            className="rounded-full border border-border px-2 py-1"
                           >
                             Down
                           </button>
@@ -1880,14 +1884,14 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                   </div>
                 </div>
               </div>
-              <div className="rounded-2xl border border-[#eadfd3] bg-white p-4">
-                <div className="rounded-2xl border border-[#eadfd3] bg-[#fffaf5] p-4">
+              <div className="rounded-2xl border border-border bg-white p-4">
+                <div className="rounded-2xl border border-border bg-muted/40 p-4">
                   <div
                     ref={modalPreviewRef}
                     className="mx-auto w-full max-w-[820px]"
                   >
                     <div
-                      className="mx-auto origin-top-left rounded-2xl border border-[#eadfd3] bg-white shadow-sm"
+                      className="mx-auto origin-top-left rounded-2xl border border-border bg-white shadow-sm"
                       style={{
                         width: A4_WIDTH,
                         height: A4_HEIGHT,
@@ -1912,8 +1916,9 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
           </div>
         </div>
       ) : null}
-    </div>
+    </DashboardLayout>
   );
 };
 
 export default TemplatesClient;
+

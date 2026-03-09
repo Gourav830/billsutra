@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getSession } from "next-auth/react";
 import { API_URL } from "./apiEndPoints";
+import { normalizeListResponse } from "./normalizeListResponse";
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -438,7 +439,7 @@ export const fetchReportsSummary = async (): Promise<ReportsSummary> => {
 
 export const fetchProducts = async (): Promise<Product[]> => {
   const response = await apiClient.get("/products");
-  return response.data.data as Product[];
+  return normalizeListResponse<Product>(response.data?.data);
 };
 
 export const createProduct = async (
@@ -461,7 +462,7 @@ export const deleteProduct = async (id: number): Promise<void> => {
 
 export const fetchCustomers = async (): Promise<Customer[]> => {
   const response = await apiClient.get("/customers");
-  return response.data.data as Customer[];
+  return normalizeListResponse<Customer>(response.data?.data);
 };
 
 export const fetchCategories = async (): Promise<Category[]> => {

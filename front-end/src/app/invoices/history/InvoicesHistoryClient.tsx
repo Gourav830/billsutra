@@ -2,9 +2,12 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/table";
+import Modal from "@/components/ui/modal";
 import { useInvoicesQuery } from "@/hooks/useInventoryQueries";
 import type { Invoice } from "@/lib/apiClient";
 
@@ -28,6 +31,7 @@ const formatDate = (value?: string | null) => {
 const InvoicesHistoryClient = ({ name, image }: InvoicesHistoryClientProps) => {
   const { data, isLoading, isError } = useInvoicesQuery();
   const [query, setQuery] = useState("");
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
 
   const invoices = useMemo(() => data ?? [], [data]);
   const filtered = useMemo(() => {
@@ -38,26 +42,37 @@ const InvoicesHistoryClient = ({ name, image }: InvoicesHistoryClientProps) => {
     );
   }, [invoices, query]);
 
+  const statusVariant = (status: string) => {
+    const value = status.toLowerCase();
+    if (value === "paid") return "paid" as const;
+    if (value === "pending") return "pending" as const;
+    if (value === "overdue") return "overdue" as const;
+    return "default" as const;
+  };
+
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1b16]">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Invoice history"
+      subtitle="Search completed invoices by their unique invoice number."
+    >
+      <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col gap-2">
-          <p className="text-sm uppercase tracking-[0.2em] text-[#8a6d56]">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500">
             Invoices
           </p>
-          <h1 className="text-3xl font-black">Invoice history</h1>
-          <p className="max-w-2xl text-base text-[#5c4b3b]">
+          <p className="max-w-2xl text-base text-gray-500">
             Search completed invoices by their unique invoice number.
           </p>
         </div>
 
         <section className="mt-6 grid gap-6">
-          <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Search invoices</h2>
-                <p className="text-sm text-[#8a6d56]">
+                <p className="text-sm text-gray-500">
                   Type an invoice number like INV-0001.
                 </p>
               </div>
@@ -74,21 +89,28 @@ const InvoicesHistoryClient = ({ name, image }: InvoicesHistoryClientProps) => {
                 >
                   Clear
                 </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => setQuickActionsOpen(true)}
+                >
+                  Quick actions
+                </Button>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#ecdccf] bg-white/90 p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Results</h2>
-              <span className="text-sm text-[#8a6d56]">
+              <span className="text-sm text-gray-500">
                 {filtered.length} shown
               </span>
             </div>
 
             <div className="mt-4">
               {isLoading && (
-                <p className="text-sm text-[#8a6d56]">Loading invoices...</p>
+                <p className="text-sm text-gray-500">Loading invoices...</p>
               )}
               {isError && (
                 <p className="text-sm text-[#b45309]">
@@ -96,71 +118,106 @@ const InvoicesHistoryClient = ({ name, image }: InvoicesHistoryClientProps) => {
                 </p>
               )}
               {!isLoading && !isError && filtered.length === 0 && (
-                <p className="text-sm text-[#8a6d56]">No invoices found.</p>
+                <p className="text-sm text-gray-500">No invoices found.</p>
               )}
               {!isLoading && !isError && filtered.length > 0 && (
-                <div className="overflow-hidden rounded-xl border border-[#f2e6dc]">
-                  <table className="min-w-full divide-y divide-[#f2e6dc] text-sm">
-                    <thead className="bg-[#fff9f2]">
-                      <tr>
-                        <th className="px-4 py-3 text-left font-semibold">
-                          Invoice No.
-                        </th>
-                        <th className="px-4 py-3 text-left font-semibold">
-                          Customer
-                        </th>
-                        <th className="px-4 py-3 text-left font-semibold">
-                          Date
-                        </th>
-                        <th className="px-4 py-3 text-left font-semibold">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 text-right font-semibold">
-                          Total
-                        </th>
-                        <th className="px-4 py-3 text-right font-semibold">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#f2e6dc]">
-                      {filtered.map((invoice: Invoice) => (
-                        <tr key={invoice.id}>
-                          <td className="px-4 py-3 font-semibold">
-                            {invoice.invoice_number}
-                          </td>
-                          <td className="px-4 py-3">
-                            {invoice.customer?.name || "-"}
-                          </td>
-                          <td className="px-4 py-3">
-                            {formatDate(invoice.date)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-full border border-[#eadacc] bg-[#fff7ef] px-2 py-1 text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
-                              {invoice.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {formatCurrency(invoice.total)}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <Button asChild variant="outline" className="h-8">
-                              <Link href={`/invoices/history/${invoice.id}`}>
-                                View
-                              </Link>
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <DataTable
+                  rows={filtered.map((invoice) => ({
+                    id: invoice.id,
+                    invoice_number: (
+                      <span className="font-semibold">
+                        {invoice.invoice_number}
+                      </span>
+                    ),
+                    customer: invoice.customer?.name || "-",
+                    date: formatDate(invoice.date),
+                    status: (
+                      <Badge variant={statusVariant(invoice.status)}>
+                        {invoice.status}
+                      </Badge>
+                    ),
+                    total: formatCurrency(invoice.total),
+                    actions: (
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg"
+                      >
+                        <Link href={`/invoices/history/${invoice.id}`}>
+                          View
+                        </Link>
+                      </Button>
+                    ),
+                  }))}
+                  searchPlaceholder="Search invoice number"
+                  searchKeys={["invoice_number", "customer", "date", "total"]}
+                  columns={[
+                    {
+                      key: "invoice_number",
+                      header: "Invoice No.",
+                    },
+                    {
+                      key: "customer",
+                      header: "Customer",
+                    },
+                    {
+                      key: "date",
+                      header: "Date",
+                    },
+                    {
+                      key: "status",
+                      header: "Status",
+                    },
+                    {
+                      key: "total",
+                      header: "Total",
+                      className: "text-right",
+                    },
+                    {
+                      key: "actions",
+                      header: "Actions",
+                      className: "text-right",
+                    },
+                  ]}
+                />
               )}
             </div>
           </div>
         </section>
-      </main>
-    </div>
+
+        <Modal
+          open={quickActionsOpen}
+          onOpenChange={setQuickActionsOpen}
+          title="Quick actions"
+          description="Start common billing tasks from one place."
+        >
+          <div className="grid gap-3">
+            <Button
+              asChild
+              variant="primary"
+              className="justify-start rounded-xl"
+            >
+              <Link href="/invoices">Create invoice</Link>
+            </Button>
+            <Button
+              asChild
+              variant="secondary"
+              className="justify-start rounded-xl"
+            >
+              <Link href="/customers">Create client</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="justify-start rounded-xl"
+            >
+              <Link href="/products">Edit product</Link>
+            </Button>
+          </div>
+        </Modal>
+      </div>
+    </DashboardLayout>
   );
 };
 

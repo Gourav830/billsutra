@@ -19,7 +19,7 @@ export type InvoiceTemplateProps = {
   gstMode: TaxMode;
 };
 
-const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
+const formatCurrency = (value: number) => `â‚¹${value.toFixed(2)}`;
 
 const InvoiceTemplate = ({
   logoUrl,
@@ -72,7 +72,7 @@ const InvoiceTemplate = ({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 rounded-2xl border border-[#f0e2d6] bg-[#fffaf5] p-5 md:grid-cols-[1.2fr_1fr]">
+      <div className="mt-6 grid gap-6 rounded-2xl border border-[#f0e2d6] bg-muted/40 p-5 md:grid-cols-[1.2fr_1fr]">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[#8a6d56]">
             Bill To
@@ -126,7 +126,7 @@ const InvoiceTemplate = ({
             {items.map((item, index) => (
               <tr
                 key={`${item.name}-${index}`}
-                className="odd:bg-white even:bg-[#fffaf5]"
+                className="odd:bg-white even:bg-muted/40"
               >
                 <td className="border-b border-[#f0e2d6] px-4 py-3 text-center">
                   <p className="font-semibold">{item.name}</p>
@@ -205,3 +205,4 @@ const InvoiceTemplate = ({
 };
 
 export default InvoiceTemplate;
+

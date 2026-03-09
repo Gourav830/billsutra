@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import axios from "axios";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -286,14 +286,17 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-[#1f1b16]">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Purchases"
+      subtitle="Record incoming stock and supplier invoices."
+    >
+      <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col gap-2">
           <p className="text-sm uppercase tracking-[0.2em] text-[#8a6d56]">
             Procurement
           </p>
-          <h1 className="text-3xl font-black">Purchases</h1>
           <p className="max-w-2xl text-base text-[#5c4b3b]">
             Record incoming stock and supplier invoices.
           </p>
@@ -719,8 +722,8 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
             </div>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

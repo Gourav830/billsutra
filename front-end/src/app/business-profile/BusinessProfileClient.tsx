@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import InvoiceRenderer from "@/components/invoice/InvoiceRenderer";
 import {
   BUSINESS_TYPES,
@@ -177,9 +177,13 @@ const BusinessProfileClient = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f1ea] text-[#1f1b16]">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Business Profile"
+      subtitle="Set up business identity and invoice defaults."
+    >
+      <div className="mx-auto w-full max-w-6xl">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
@@ -196,7 +200,7 @@ const BusinessProfileClient = ({
                 className={`rounded-full border px-3 py-1 ${
                   currentStep === step.id
                     ? "border-primary text-primary"
-                    : "border-[#eadfd3]"
+                    : "border-border"
                 }`}
               >
                 {step.label}
@@ -206,7 +210,7 @@ const BusinessProfileClient = ({
         </header>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="rounded-3xl border border-[#eadfd3] bg-white p-6">
+          <section className="rounded-3xl border border-border bg-white p-6">
             {currentStep === 1 && (
               <div>
                 <h2 className="text-sm font-semibold">
@@ -221,14 +225,14 @@ const BusinessProfileClient = ({
                       className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${
                         businessTypeId === type.id
                           ? "border-primary bg-primary/5 text-primary"
-                          : "border-[#eadfd3] text-[#5c4b3b] hover:border-primary/50"
+                          : "border-border text-[#5c4b3b] hover:border-primary/50"
                       }`}
                     >
                       {type.label}
                     </button>
                   ))}
                 </div>
-                <div className="mt-6 rounded-2xl border border-[#eadfd3] bg-[#faf6f1] p-4 text-sm text-[#5c4b3b]">
+                <div className="mt-6 rounded-2xl border border-border bg-[#faf6f1] p-4 text-sm text-[#5c4b3b]">
                   <p className="font-semibold">Enabled sections</p>
                   <p className="mt-2 text-xs">
                     {enabledSections
@@ -252,7 +256,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("businessName", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                   <label className="text-sm">
@@ -262,7 +266,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("phone", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                   <label className="text-sm sm:col-span-2">
@@ -272,7 +276,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("address", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                   <label className="text-sm">
@@ -282,7 +286,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("email", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                   <label className="text-sm">
@@ -292,7 +296,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("website", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                   <label className="text-sm">
@@ -302,7 +306,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("logoUrl", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                   <label className="text-sm">
@@ -312,7 +316,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("taxId", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                   <label className="text-sm">
@@ -322,7 +326,7 @@ const BusinessProfileClient = ({
                       onChange={(event) =>
                         updateProfile("currency", event.target.value)
                       }
-                      className="mt-2 w-full rounded-xl border border-[#eadfd3] px-3 py-2"
+                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
                 </div>
@@ -381,7 +385,7 @@ const BusinessProfileClient = ({
                       className={`rounded-2xl border px-4 py-4 text-left transition ${
                         selectedTemplateId === template.id
                           ? "border-primary bg-primary/5"
-                          : "border-[#eadfd3] hover:border-primary/50"
+                          : "border-border hover:border-primary/50"
                       }`}
                     >
                       <div
@@ -404,7 +408,7 @@ const BusinessProfileClient = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
-                className="rounded-full border border-[#eadfd3] px-4 py-2 text-sm"
+                className="rounded-full border border-border px-4 py-2 text-sm"
               >
                 Back
               </button>
@@ -429,7 +433,7 @@ const BusinessProfileClient = ({
             </div>
           </section>
 
-          <section className="rounded-3xl border border-[#eadfd3] bg-white p-6">
+          <section className="rounded-3xl border border-border bg-white p-6">
             <h2 className="text-sm font-semibold">Preview</h2>
             <p className="mt-2 text-xs text-[#8a6d56]">
               Matches the selected template and business profile.
@@ -443,9 +447,10 @@ const BusinessProfileClient = ({
             </div>
           </section>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
 export default BusinessProfileClient;
+

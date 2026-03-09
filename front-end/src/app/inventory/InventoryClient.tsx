@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,31 +116,39 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Warehouse Inventory"
+      subtitle="All warehouse stock levels, grouped by location."
+    >
+      <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col gap-2">
-          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500">
             Inventory
           </p>
-          <h1 className="text-3xl font-black">Warehouse Inventory</h1>
-          <p className="max-w-2xl text-base text-muted-foreground">
+          <p className="max-w-2xl text-base text-gray-500">
             All warehouse stock levels, grouped by location.
           </p>
         </div>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-          <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="text-lg font-semibold">Adjust inventory</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               Log stock movements for audits and corrections.
             </p>
             <form className="mt-4 grid gap-4" onSubmit={handleAdjust}>
               <div className="grid gap-2">
-                <Label htmlFor="warehouse_select">Warehouse</Label>
+                <Label
+                  htmlFor="warehouse_select"
+                  className="text-xs text-gray-500"
+                >
+                  Warehouse
+                </Label>
                 <select
                   id="warehouse_select"
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-800"
                   value={form.warehouse_id}
                   onChange={(event) => {
                     setForm((prev) => ({
@@ -165,10 +173,15 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
                 )}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="product_select">Product</Label>
+                <Label
+                  htmlFor="product_select"
+                  className="text-xs text-gray-500"
+                >
+                  Product
+                </Label>
                 <select
                   id="product_select"
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-800"
                   value={form.product_id}
                   onChange={(event) => {
                     setForm((prev) => ({
@@ -193,7 +206,9 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
                 )}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="change">Quantity change</Label>
+                <Label htmlFor="change" className="text-xs text-gray-500">
+                  Quantity change
+                </Label>
                 <Input
                   id="change"
                   type="number"
@@ -207,6 +222,7 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
                     setServerError(null);
                   }}
                   placeholder="Use negative values to remove stock"
+                  className="h-10 rounded-xl border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
                 />
                 {fieldErrors.change && (
                   <p className="text-xs text-destructive">
@@ -215,10 +231,12 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
                 )}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="reason">Reason</Label>
+                <Label htmlFor="reason" className="text-xs text-gray-500">
+                  Reason
+                </Label>
                 <select
                   id="reason"
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm shadow-sm dark:border-gray-700 dark:bg-gray-800"
                   value={form.reason}
                   onChange={(event) =>
                     setForm((prev) => ({
@@ -235,7 +253,9 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
                 </select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="note">Note</Label>
+                <Label htmlFor="note" className="text-xs text-gray-500">
+                  Note
+                </Label>
                 <Input
                   id="note"
                   value={form.note}
@@ -243,11 +263,12 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
                     setForm((prev) => ({ ...prev, note: event.target.value }))
                   }
                   placeholder="Optional context"
+                  className="h-10 rounded-xl border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
                 />
               </div>
               <Button
                 type="submit"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                variant="primary"
                 disabled={adjustInventory.isPending}
               >
                 Apply adjustment
@@ -262,9 +283,7 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
 
           <div className="grid gap-4">
             {isLoading && (
-              <p className="text-sm text-muted-foreground">
-                Loading inventory...
-              </p>
+              <p className="text-sm text-gray-500">Loading inventory...</p>
             )}
             {isError && (
               <p className="text-sm text-destructive">
@@ -272,33 +291,31 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
               </p>
             )}
             {!isLoading && !isError && grouped.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No inventory records yet.
-              </p>
+              <p className="text-sm text-gray-500">No inventory records yet.</p>
             )}
             {!isLoading && !isError && grouped.length > 0 && (
               <div className="grid gap-4">
                 {grouped.map((group) => (
                   <div
                     key={group.name}
-                    className="rounded-2xl border border-border bg-card p-6"
+                    className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
                   >
                     <h2 className="text-lg font-semibold">{group.name}</h2>
                     <div className="mt-4 grid gap-3">
                       {group.items?.map((item) => (
                         <div
                           key={item.id}
-                          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition-colors hover:bg-indigo-50/60 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-indigo-500/10"
                         >
                           <div>
                             <p className="text-base font-semibold">
                               {item.product.name} • {item.product.sku}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-gray-500">
                               Reorder at {item.product.reorder_level}
                             </p>
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-gray-500">
                             Stock: {item.quantity}
                           </div>
                         </div>
@@ -310,8 +327,8 @@ const InventoryClient = ({ name, image }: InventoryClientProps) => {
             )}
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

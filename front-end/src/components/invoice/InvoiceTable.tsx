@@ -37,7 +37,7 @@ const InvoiceTable = ({
     <div className="mt-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-[#8a6d56]">
+          <p className="text-xs uppercase tracking-[0.25em] text-gray-500">
             Line items
           </p>
           <h2 className="mt-2 text-lg font-semibold">Invoice items</h2>
@@ -51,14 +51,14 @@ const InvoiceTable = ({
         {items.map((item, index) => (
           <div
             key={`item-${index}`}
-            className="grid gap-3 rounded-2xl border border-[#f0e2d6] bg-white p-4 shadow-[0_12px_30px_-24px_rgba(92,75,59,0.5)] md:grid-cols-[1.2fr_1fr_0.6fr_0.7fr_0.6fr_auto]"
+            className="grid gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:grid-cols-[1.2fr_1fr_0.6fr_0.7fr_0.6fr_auto] dark:border-gray-700 dark:bg-gray-800"
           >
             <div className="grid gap-2">
-              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                 Product
               </Label>
               <select
-                className="h-10 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm text-[#1f1b16] shadow-sm focus:border-[#d6b38e] focus:outline-none focus:ring-2 focus:ring-[#d6b38e]/40"
+                className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-sm focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-500/20"
                 value={item.product_id}
                 onChange={(event) => onProductSelect(index, event.target.value)}
               >
@@ -70,14 +70,14 @@ const InvoiceTable = ({
                 ))}
               </select>
               {errors[index]?.product_id && (
-                <p className="text-xs text-[#b45309]">
+                <p className="text-xs text-red-600 dark:text-red-300">
                   {errors[index]?.product_id}
                 </p>
               )}
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                 Name
               </Label>
               <Input
@@ -85,15 +85,17 @@ const InvoiceTable = ({
                 onChange={(event) =>
                   onItemChange(index, "name", event.target.value)
                 }
-                className="h-10 border-[#e4d6ca] bg-white shadow-sm focus-visible:ring-[#d6b38e]/40"
+                className="h-10 rounded-xl border-gray-200 bg-white shadow-sm focus-visible:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:focus-visible:ring-indigo-500/20"
               />
               {errors[index]?.name && (
-                <p className="text-xs text-[#b45309]">{errors[index]?.name}</p>
+                <p className="text-xs text-red-600 dark:text-red-300">
+                  {errors[index]?.name}
+                </p>
               )}
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                 Qty
               </Label>
               <Input
@@ -102,17 +104,17 @@ const InvoiceTable = ({
                 onChange={(event) =>
                   onItemChange(index, "quantity", event.target.value)
                 }
-                className="h-10 border-[#e4d6ca] bg-white shadow-sm focus-visible:ring-[#d6b38e]/40"
+                className="h-10 rounded-xl border-gray-200 bg-white shadow-sm focus-visible:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:focus-visible:ring-indigo-500/20"
               />
               {errors[index]?.quantity && (
-                <p className="text-xs text-[#b45309]">
+                <p className="text-xs text-red-600 dark:text-red-300">
                   {errors[index]?.quantity}
                 </p>
               )}
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                 Price
               </Label>
               <Input
@@ -121,15 +123,17 @@ const InvoiceTable = ({
                 onChange={(event) =>
                   onItemChange(index, "price", event.target.value)
                 }
-                className="h-10 border-[#e4d6ca] bg-white shadow-sm focus-visible:ring-[#d6b38e]/40"
+                className="h-10 rounded-xl border-gray-200 bg-white shadow-sm focus-visible:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:focus-visible:ring-indigo-500/20"
               />
               {errors[index]?.price && (
-                <p className="text-xs text-[#b45309]">{errors[index]?.price}</p>
+                <p className="text-xs text-red-600 dark:text-red-300">
+                  {errors[index]?.price}
+                </p>
               )}
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
+              <Label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                 GST %
               </Label>
               <Input
@@ -138,10 +142,10 @@ const InvoiceTable = ({
                 onChange={(event) =>
                   onItemChange(index, "tax_rate", event.target.value)
                 }
-                className="h-10 border-[#e4d6ca] bg-white shadow-sm focus-visible:ring-[#d6b38e]/40"
+                className="h-10 rounded-xl border-gray-200 bg-white shadow-sm focus-visible:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:focus-visible:ring-indigo-500/20"
               />
               {errors[index]?.tax_rate && (
-                <p className="text-xs text-[#b45309]">
+                <p className="text-xs text-red-600 dark:text-red-300">
                   {errors[index]?.tax_rate}
                 </p>
               )}
@@ -150,7 +154,7 @@ const InvoiceTable = ({
             <div className="flex items-end">
               <Button
                 type="button"
-                variant="destructive"
+                variant="danger"
                 onClick={() => onRemoveItem(index)}
                 disabled={items.length === 1}
                 className="h-10"

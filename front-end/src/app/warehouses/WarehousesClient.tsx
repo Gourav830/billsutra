@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { toast } from "sonner";
-import DashNavbar from "@/components/dashboard/DashNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -135,14 +135,17 @@ const WarehousesClient = ({ name, image }: WarehousesClientProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <DashNavbar name={name} image={image} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-10">
+    <DashboardLayout
+      name={name}
+      image={image}
+      title="Warehouses"
+      subtitle="Monitor warehouse footprints and available stock at a glance."
+    >
+      <div className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col gap-2">
           <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
             Storage
           </p>
-          <h1 className="text-3xl font-black">Warehouses</h1>
           <p className="max-w-2xl text-base text-muted-foreground">
             Monitor warehouse footprints and available stock at a glance.
           </p>
@@ -318,8 +321,8 @@ const WarehousesClient = ({ name, image }: WarehousesClientProps) => {
             </div>
           </div>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

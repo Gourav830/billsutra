@@ -36,7 +36,6 @@ import {
   saveUserTemplate,
   updateUserSavedTemplate,
 } from "@/lib/apiClient";
-import { calculateTotals } from "@/components/invoice/sections/utils";
 import { useInvoicePdf } from "@/hooks/invoice/useInvoicePdf";
 
 const MemoTemplatePreview = memo(TemplatePreviewRenderer);
@@ -533,36 +532,6 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
       },
     };
   }, [businessProfile, previewShowLogo]);
-
-  const buildPreviewPdfInput = () => {
-    const totals = calculateTotals(modalPreviewData.items);
-    return {
-      businessName: modalPreviewData.business.businessName,
-      invoiceNumber: modalPreviewData.invoiceNumber,
-      invoiceDate: modalPreviewData.invoiceDate,
-      customer: modalPreviewData.client,
-      items: modalPreviewData.items.map((item) => {
-        const lineSubtotal = item.quantity * item.unitPrice;
-        const lineTax = lineSubtotal * ((item.taxRate ?? 0) / 100);
-        return {
-          name: item.name,
-          quantity: item.quantity,
-          price: item.unitPrice,
-          tax_rate: item.taxRate ?? 0,
-          total: lineSubtotal + lineTax,
-        };
-      }),
-      totals: {
-        subtotal: totals.subtotal,
-        tax: totals.tax,
-        discount: 0,
-        total: totals.total,
-      },
-      taxMode: "CGST_SGST" as const,
-      themeColor: previewThemeColor,
-      fileName: `${previewTemplate?.name ?? "template"}-preview.pdf`,
-    };
-  };
 
   const cardPreviewData = useMemo(() => {
     return {
@@ -1774,7 +1743,23 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => downloadPdf(buildPreviewPdfInput())}
+                  onClick={async () => {
+                    try {
+                      await downloadPdf({
+                        previewPayload: {
+                          templateId: previewTemplate.id,
+                          data: modalPreviewData,
+                          enabledSections: previewEnabledSections,
+                          sectionOrder: previewSectionOrder,
+                          theme: previewTheme,
+                          designConfig,
+                        },
+                        fileName: `${previewTemplate.name}-preview.pdf`,
+                      });
+                    } catch {
+                      toast.error("Unable to generate PDF from preview");
+                    }
+                  }}
                   className="rounded-full border border-border px-4 py-2 text-xs font-semibold"
                 >
                   Download PDF
@@ -1909,7 +1894,10 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
               </div>
               <div className="rounded-2xl border border-border bg-white p-4">
                 <div className="rounded-2xl border border-border bg-white p-2.5">
-                  <div className="mx-auto w-full max-w-[820px]">
+                  <div
+                    id="template-preview-pdf-root"
+                    className="mx-auto w-full max-w-[820px]"
+                  >
                     <DesignConfigProvider value={designContextValue}>
                       <A4PreviewStack
                         stackKey={`templates-modal-${previewTemplate.id}-${previewEnabledSections.join(",")}-${previewSectionOrder.join(",")}-${previewThemeColor}-${previewShowLogo}`}

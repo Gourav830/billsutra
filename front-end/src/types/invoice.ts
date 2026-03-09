@@ -1,3 +1,10 @@
+import type {
+  InvoicePreviewData,
+  InvoiceTheme,
+  SectionKey,
+} from "@/types/invoice-template";
+import type { DesignConfig } from "@/components/invoice/DesignConfigContext";
+
 export type TaxMode = "CGST_SGST" | "IGST" | "NONE";
 
 export type InvoiceFormState = {
@@ -89,13 +96,18 @@ export type InvoicePdfCustomer = {
 };
 
 export type InvoicePdfInput = {
-  businessName: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-  customer?: InvoicePdfCustomer | null;
-  items: InvoicePdfItem[];
-  totals: InvoicePdfTotals;
-  taxMode: TaxMode;
-  themeColor?: string;
+  elementId?: string;
+  selector?: string;
+  element?: HTMLElement | null;
+  previewPayload?: {
+    templateId?: string | null;
+    data: InvoicePreviewData;
+    enabledSections: SectionKey[];
+    sectionOrder?: SectionKey[];
+    theme: InvoiceTheme;
+    designConfig?: Partial<DesignConfig> | null;
+  };
   fileName?: string;
+  imageType?: "png" | "jpeg";
+  quality?: number;
 };

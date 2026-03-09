@@ -54,9 +54,6 @@ type InvoiceClientProps = {
   image?: string;
 };
 
-const round2 = (value: number) =>
-  Math.round((value + Number.EPSILON) * 100) / 100;
-
 const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
   const { data: customers } = useCustomersQuery();
   const { data: products } = useProductsQuery();
@@ -275,23 +272,6 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
     return fallback;
   };
 
-  const templateItems = useMemo(() => {
-    return items.map((item) => {
-      const quantity = Number(item.quantity) || 0;
-      const price = Number(item.price) || 0;
-      const taxRate = Number(item.tax_rate) || 0;
-      const lineSubtotal = quantity * price;
-      const lineTax = taxMode === "NONE" ? 0 : (lineSubtotal * taxRate) / 100;
-      return {
-        name: item.name || "Item",
-        quantity,
-        price,
-        tax_rate: item.tax_rate ? Number(item.tax_rate) : 0,
-        total: round2(lineSubtotal + lineTax),
-      };
-    });
-  }, [items, taxMode]);
-
   const customer = useMemo(
     () =>
       (customers ?? []).find((item) => String(item.id) === form.customer_id),
@@ -477,33 +457,30 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
     window.print();
   }, []);
 
-  const handleDownloadPdf = useCallback(() => {
-    downloadPdf({
-      businessName: businessProfile?.business_name || "BillSutra",
-      invoiceNumber: "INV-NEW",
-      invoiceDate,
-      customer: customer
-        ? {
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            address: customer.address,
-          }
-        : null,
-      items: templateItems,
-      totals,
-      taxMode,
-      themeColor: activeTheme.primaryColor,
-    });
+  const handleDownloadPdf = useCallback(async () => {
+    try {
+      await downloadPdf({
+        previewPayload: {
+          templateId: selectedTemplate.id,
+          data: invoicePreviewData,
+          enabledSections: activeEnabledSections,
+          sectionOrder: activeSectionOrder,
+          theme: activeTheme,
+          designConfig: activeDesignConfig,
+        },
+        fileName: `invoice-${invoicePreviewData.invoiceNumber}.pdf`,
+      });
+    } catch {
+      toast.error("Unable to generate PDF from preview");
+    }
   }, [
-    activeTheme.primaryColor,
-    businessProfile,
-    customer,
+    activeDesignConfig,
+    activeEnabledSections,
+    activeSectionOrder,
+    activeTheme,
     downloadPdf,
-    invoiceDate,
-    taxMode,
-    templateItems,
-    totals,
+    invoicePreviewData,
+    selectedTemplate.id,
   ]);
 
   const handleTemplateSelect = async (templateId: string) => {
@@ -744,7 +721,10 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
                   resetAll: () => {},
                 }}
               >
-                <div className="rounded-xl border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-700 print:border-0 print:bg-transparent print:p-0 print:shadow-none">
+                <div
+                  id="invoice-preview-pdf-root"
+                  className="rounded-xl border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-700 print:border-0 print:bg-transparent print:p-0 print:shadow-none"
+                >
                   <A4PreviewStack
                     stackKey={`invoices-preview-${selectedTemplate.id}-${activeSectionOrder.join(",")}-${activeEnabledSections.join(",")}-${activeTheme.primaryColor}`}
                   >

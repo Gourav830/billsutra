@@ -3,8 +3,8 @@ import { generateInvoicePdf } from "@/lib/pdf/generateInvoicePdf";
 import type { InvoicePdfInput } from "@/types/invoice";
 
 export const useInvoicePdf = () => {
-  const downloadPdf = useCallback((input: InvoicePdfInput) => {
-    generateInvoicePdf(input);
+  const downloadPdf = useCallback(async (input: InvoicePdfInput) => {
+    await generateInvoicePdf(input);
   }, []);
 
   return { downloadPdf };

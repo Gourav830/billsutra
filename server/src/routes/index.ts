@@ -294,6 +294,12 @@ router.put(
   validate({ params: idParamSchema, body: saleUpdateSchema }),
   SalesController.update,
 );
+router.delete(
+  "/sales/:id",
+  AuthMiddleware,
+  validate({ params: idParamSchema }),
+  SalesController.destroy,
+);
 
 // Warehouses
 router.get("/warehouses", AuthMiddleware, WarehousesController.index);

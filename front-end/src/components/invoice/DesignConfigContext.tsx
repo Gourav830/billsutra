@@ -196,9 +196,21 @@ export const useSectionStyles = (section: SectionKey) => {
   const { designConfig } = useDesignConfig();
   const config = designConfig[section] ?? DEFAULT_DESIGN_CONFIG[section];
   const widthStyles =
+    config.width === "contained" ? { maxWidth: "720px" } : { width: "100%" };
+  const marginStyles =
     config.width === "contained"
-      ? { maxWidth: "720px", marginLeft: "auto", marginRight: "auto" }
-      : { width: "100%" };
+      ? {
+          marginTop: config.margin,
+          marginBottom: config.margin,
+          marginLeft: "auto",
+          marginRight: "auto",
+        }
+      : {
+          marginTop: config.margin,
+          marginRight: config.margin,
+          marginBottom: config.margin,
+          marginLeft: config.margin,
+        };
 
   return {
     config,
@@ -208,7 +220,6 @@ export const useSectionStyles = (section: SectionKey) => {
       fontFamily: config.fontFamily,
       fontSize: config.fontSize,
       padding: config.padding,
-      margin: config.margin,
       borderRadius: config.borderRadius,
       backgroundImage: config.backgroundImage
         ? `url(${config.backgroundImage})`
@@ -216,6 +227,7 @@ export const useSectionStyles = (section: SectionKey) => {
       backgroundSize: config.backgroundImage ? "cover" : undefined,
       backgroundPosition: config.backgroundImage ? "center" : undefined,
       backgroundRepeat: config.backgroundImage ? "no-repeat" : undefined,
+      ...marginStyles,
       ...widthStyles,
     } as CSSProperties,
   };

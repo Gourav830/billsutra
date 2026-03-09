@@ -138,38 +138,52 @@ export const store = async (req: Request, res: Response) => {
     const body = req.body as InvoiceCreateInput;
     const invoice = await createInvoice(userId, body);
 
-    const invoiceForNotification = await getInvoiceForNotification(
-      userId,
-      invoice.id,
-    );
-
-    if (invoiceForNotification) {
-      const publicInvoiceLink = getPublicInvoiceLink(
-        req,
-        invoiceForNotification.id,
+    let notificationWarning: string | null = null;
+    try {
+      const invoiceForNotification = await getInvoiceForNotification(
+        userId,
+        invoice.id,
       );
 
-      await sendInvoiceNotification(
-        "created",
-        {
-          invoiceId: invoiceForNotification.id,
-          invoiceNumber: invoiceForNotification.invoice_number,
-          status: invoiceForNotification.status,
-          issueDate: invoiceForNotification.date,
-          dueDate: invoiceForNotification.due_date,
-          total: invoiceForNotification.total,
-          subtotal: invoiceForNotification.subtotal,
-          tax: invoiceForNotification.tax,
-          discount: invoiceForNotification.discount,
-          customer: invoiceForNotification.customer,
-          items: invoiceForNotification.items,
-          businessProfile: invoiceForNotification.user.business_profile,
-        },
-        publicInvoiceLink,
+      if (invoiceForNotification) {
+        const publicInvoiceLink = getPublicInvoiceLink(
+          req,
+          invoiceForNotification.id,
+        );
+
+        await sendInvoiceNotification(
+          "created",
+          {
+            invoiceId: invoiceForNotification.id,
+            invoiceNumber: invoiceForNotification.invoice_number,
+            status: invoiceForNotification.status,
+            issueDate: invoiceForNotification.date,
+            dueDate: invoiceForNotification.due_date,
+            total: invoiceForNotification.total,
+            subtotal: invoiceForNotification.subtotal,
+            tax: invoiceForNotification.tax,
+            discount: invoiceForNotification.discount,
+            customer: invoiceForNotification.customer,
+            items: invoiceForNotification.items,
+            businessProfile: invoiceForNotification.user.business_profile,
+          },
+          publicInvoiceLink,
+        );
+      }
+    } catch (notificationError) {
+      const err = notificationError as Error;
+      notificationWarning =
+        err.message || "Invoice created but notification failed";
+      console.warn(
+        `[invoice.store] Created invoice ${invoice.id}, but notification failed: ${notificationWarning}`,
       );
     }
 
-    return res.status(201).json({ message: "Invoice created", data: invoice });
+    return res.status(201).json({
+      message: "Invoice created",
+      data: invoice,
+      warning: notificationWarning,
+    });
   } catch (error) {
     const err = error as Error & {
       status?: number;

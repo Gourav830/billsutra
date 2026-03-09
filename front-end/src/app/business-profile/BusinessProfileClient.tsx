@@ -453,4 +453,3 @@ const BusinessProfileClient = ({
 };
 
 export default BusinessProfileClient;
-

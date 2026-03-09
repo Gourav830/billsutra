@@ -20,7 +20,7 @@ type TransactionRow = {
   invoiceNumber: string;
   customer: string;
   amount: number;
-  status: string;
+  paymentStatus: "PAID" | "PARTIAL" | "PENDING";
 };
 
 const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN")}`;
@@ -44,21 +44,19 @@ const columns: ColumnDef<TransactionRow>[] = [
     cell: ({ row }) => formatCurrency(row.original.amount),
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "paymentStatus",
+    header: "Payment Status",
     cell: ({ row }) => (
       <Badge
         variant={
-          row.original.status.toLowerCase() === "paid"
+          row.original.paymentStatus === "PAID"
             ? "paid"
-            : row.original.status.toLowerCase() === "pending"
+            : row.original.paymentStatus === "PENDING"
               ? "pending"
-              : row.original.status.toLowerCase() === "overdue"
-                ? "overdue"
-                : "default"
+              : "default"
         }
       >
-        {row.original.status}
+        {row.original.paymentStatus}
       </Badge>
     ),
   },

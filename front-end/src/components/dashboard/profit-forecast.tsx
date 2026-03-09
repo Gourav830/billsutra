@@ -4,8 +4,8 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -41,16 +41,25 @@ const ProfitForecast = () => {
     queryFn: fetchDashboardForecast,
   });
 
-  const profitSeries = data?.profit.last30 ?? [];
   const monthlyProfit = data?.profit.monthly ?? [];
-  const forecastSeries = data?.forecast.next14Days ?? [];
+  const historical = data?.forecast.historicalMonthly ?? [];
+  const predicted = data?.forecast.predictedMonthly ?? [];
 
-  const totalProfit = profitSeries.reduce((sum, item) => sum + item.profit, 0);
-  const totalRevenue = profitSeries.reduce(
+  const totalRevenue = monthlyProfit.reduce(
     (sum, item) => sum + item.revenue,
     0,
   );
+  const totalCost = monthlyProfit.reduce(
+    (sum, item) => sum + item.totalCost,
+    0,
+  );
+  const totalProfit = monthlyProfit.reduce((sum, item) => sum + item.profit, 0);
   const avgMargin = totalRevenue === 0 ? 0 : (totalProfit / totalRevenue) * 100;
+
+  const forecastSeries = [
+    ...historical.map((item) => ({ month: item.month, actual: item.sales })),
+    ...predicted.map((item) => ({ month: item.month, forecast: item.value })),
+  ];
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -72,19 +81,16 @@ const ProfitForecast = () => {
               <div className="grid gap-3 sm:grid-cols-3">
                 {[
                   {
-                    label: "30-day profit",
+                    label: "Total revenue",
+                    value: formatCurrency(totalRevenue),
+                  },
+                  {
+                    label: "Total cost",
+                    value: formatCurrency(totalCost),
+                  },
+                  {
+                    label: "Net profit",
                     value: formatCurrency(totalProfit),
-                  },
-                  {
-                    label: "Avg margin",
-                    value: `${avgMargin.toFixed(1)}%`,
-                  },
-                  {
-                    label: "Best month",
-                    value:
-                      monthlyProfit
-                        .slice()
-                        .sort((a, b) => b.profit - a.profit)[0]?.month ?? "-",
                   },
                 ].map((item) => (
                   <div
@@ -103,27 +109,28 @@ const ProfitForecast = () => {
 
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
-                  Profit trend (last 30 days)
+                  Monthly profit trend
                 </p>
                 <div className="mt-3 h-48">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={profitSeries}>
+                    <BarChart data={monthlyProfit}>
                       <CartesianGrid stroke="#f2e6dc" strokeDasharray="3 3" />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
                       <Tooltip
                         formatter={(value) => formatTooltipValue(value)}
                       />
-                      <Area
-                        type="monotone"
+                      <Bar
                         dataKey="profit"
-                        stroke="#0f766e"
-                        fill="rgba(15,118,110,0.2)"
-                        strokeWidth={2}
+                        fill={totalProfit >= 0 ? "#16a34a" : "#dc2626"}
+                        radius={[6, 6, 0, 0]}
                       />
-                    </AreaChart>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
+                <p className="text-xs text-[#8a6d56]">
+                  Avg margin: {avgMargin.toFixed(1)}%
+                </p>
               </div>
             </>
           )}
@@ -150,22 +157,30 @@ const ProfitForecast = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={forecastSeries}>
                     <CartesianGrid stroke="#f2e6dc" strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip formatter={(value) => formatTooltipValue(value)} />
+                    <Line
+                      type="monotone"
+                      dataKey="actual"
+                      stroke="#0f766e"
+                      strokeWidth={2}
+                      dot={false}
+                    />
                     <Line
                       type="monotone"
                       dataKey="forecast"
                       stroke="#f97316"
                       strokeWidth={2}
+                      strokeDasharray="5 5"
                       dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
               <p className="text-xs text-[#8a6d56]">
-                Forecast uses seasonal day-of-week averages from the last 8
-                weeks.
+                Forecast uses a 3-month moving average and fills missing months
+                with zero values before prediction.
               </p>
             </>
           )}

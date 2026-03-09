@@ -3,25 +3,40 @@ import { getSession } from "next-auth/react";
 import { API_URL } from "./apiEndPoints";
 import { normalizeListResponse } from "./normalizeListResponse";
 
+const normalizeAuthToken = (rawToken: string | null | undefined) => {
+  if (!rawToken) return null;
+  const token = rawToken.trim();
+  if (!token) return null;
+  if (token === "undefined" || token === "null") return null;
+  if (token === "Bearer undefined" || token === "Bearer null") return null;
+  return token;
+};
+
 const apiClient = axios.create({
   baseURL: API_URL,
 });
 
 apiClient.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
-    let token = window.localStorage.getItem("token");
+    let token = normalizeAuthToken(window.localStorage.getItem("token"));
 
     if (!token) {
       const session = await getSession();
-      token = (session?.user as { token?: string } | undefined)?.token ?? null;
+      token = normalizeAuthToken(
+        (session?.user as { token?: string } | undefined)?.token ?? null,
+      );
       if (token) {
         window.localStorage.setItem("token", token);
+      } else {
+        window.localStorage.removeItem("token");
       }
     }
 
     if (token) {
       const header = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
       config.headers.Authorization = header;
+    } else if (config.headers?.Authorization) {
+      delete config.headers.Authorization;
     }
   }
   return config;
@@ -112,6 +127,19 @@ export type Purchase = {
   subtotal: string;
   tax: string;
   total: string;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  paymentStatus: "PAID" | "PARTIALLY_PAID" | "UNPAID";
+  paymentDate?: string | null;
+  paymentMethod?:
+    | "CASH"
+    | "CARD"
+    | "BANK_TRANSFER"
+    | "UPI"
+    | "CHEQUE"
+    | "OTHER"
+    | null;
   notes?: string | null;
   supplier?: Supplier | null;
   warehouse?: { id: number; name: string } | null;
@@ -130,6 +158,17 @@ export type PurchaseInput = {
   supplier_id?: number | null;
   warehouse_id?: number | null;
   purchase_date?: string | Date | null;
+  payment_status?: "PAID" | "PARTIALLY_PAID" | "UNPAID";
+  amount_paid?: number | null;
+  payment_date?: string | Date | null;
+  payment_method?:
+    | "CASH"
+    | "CARD"
+    | "BANK_TRANSFER"
+    | "UPI"
+    | "CHEQUE"
+    | "OTHER"
+    | null;
   notes?: string | null;
   items: Array<{
     product_id: number;
@@ -146,6 +185,20 @@ export type Sale = {
   subtotal: string;
   tax: string;
   total: string;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  paymentStatus: "PAID" | "PARTIALLY_PAID" | "UNPAID";
+  paymentDate?: string | null;
+  paymentMethod?:
+    | "CASH"
+    | "CARD"
+    | "BANK_TRANSFER"
+    | "UPI"
+    | "CHEQUE"
+    | "OTHER"
+    | null;
+  notes?: string | null;
   customer?: Customer | null;
   items: Array<{
     id: number;
@@ -163,6 +216,17 @@ export type SaleInput = {
   warehouse_id?: number | null;
   sale_date?: string | Date | null;
   status?: string | null;
+  payment_status?: "PAID" | "PARTIALLY_PAID" | "UNPAID";
+  amount_paid?: number | null;
+  payment_date?: string | Date | null;
+  payment_method?:
+    | "CASH"
+    | "CARD"
+    | "BANK_TRANSFER"
+    | "UPI"
+    | "CHEQUE"
+    | "OTHER"
+    | null;
   notes?: string | null;
   items: Array<{
     product_id: number;
@@ -250,15 +314,27 @@ export type DashboardOverview = {
     totalRevenue: number;
     totalSales: number;
     totalPurchases: number;
+    expenses: number;
     receivables: number;
     payables: number;
+    pendingPayments: number;
     inventoryValue: number;
+    profits: {
+      today: number;
+      weekly: number;
+      monthly: number;
+    };
     changes: {
       totalRevenue: number;
       totalSales: number;
       totalPurchases: number;
+      expenses: number;
       receivables: number;
       payables: number;
+      todayProfit: number;
+      weeklyProfit: number;
+      monthlyProfit: number;
+      pendingPayments: number;
       inventoryValue: number;
     };
   };
@@ -273,7 +349,36 @@ export type DashboardOverview = {
     overdueInvoices: string[];
     supplierPayables: string[];
   };
+  notifications: Array<{
+    id: string;
+    type: "LOW_STOCK" | "PENDING_INVOICE" | "SUPPLIER_PAYABLE";
+    title: string;
+    message: string;
+    redirectUrl: string;
+    createdAt: string;
+    read: boolean;
+  }>;
+  pendingPayments?: Array<{
+    id: number;
+    invoiceNumber: string;
+    customer: string;
+    totalAmount: number;
+    paidAmount: number;
+    pendingAmount: number;
+    paymentStatus: "PAID" | "PARTIAL" | "PENDING";
+    date: string;
+  }>;
   activity: Array<{ time: string; label: string }>;
+};
+
+export type PaymentInput = {
+  invoice_id: number;
+  amount: number;
+  method?: "CASH" | "CARD" | "BANK_TRANSFER" | "UPI" | "CHEQUE" | "OTHER";
+  provider?: string;
+  transaction_id?: string;
+  reference?: string;
+  paid_at?: string | Date;
 };
 
 export type DashboardSales = {
@@ -301,7 +406,7 @@ export type DashboardTransaction = {
   invoiceNumber: string;
   customer: string;
   amount: number;
-  status: string;
+  paymentStatus: "PAID" | "PARTIAL" | "PENDING";
 };
 
 export type DashboardTransactions = {
@@ -309,9 +414,30 @@ export type DashboardTransactions = {
 };
 
 export type DashboardCustomers = {
-  total: number;
+  totalRegisteredCustomers: number;
   pendingPayments: number;
-  topCustomers: Array<{ name: string; total: number }>;
+  customerVisits: {
+    daily: {
+      registeredCustomers: number;
+      walkInCustomers: number;
+      totalCustomers: number;
+    };
+    weekly: {
+      registeredCustomers: number;
+      walkInCustomers: number;
+      totalCustomers: number;
+    };
+    monthly: {
+      registeredCustomers: number;
+      walkInCustomers: number;
+      totalCustomers: number;
+    };
+  };
+  topCustomers: Array<{
+    name: string;
+    totalPurchaseAmount: number;
+    numberOfOrders: number;
+  }>;
 };
 
 export type DashboardSuppliers = {
@@ -323,23 +449,32 @@ export type DashboardSuppliers = {
 export type DashboardCashflow = {
   inflow: number;
   outflow: number;
-  net: number;
+  netCashFlow: number;
   series: Array<{ date: string; inflow: number; outflow: number }>;
 };
 
 export type DashboardProfit = {
-  monthly: Array<{ month: string; profit: number; margin: number }>;
+  monthly: Array<{
+    month: string;
+    revenue: number;
+    totalCost: number;
+    expenses: number;
+    profit: number;
+    margin: number;
+  }>;
   last30: Array<{
     date: string;
     revenue: number;
     cost: number;
+    expenses: number;
     profit: number;
   }>;
 };
 
 export type DashboardForecast = {
   method: string;
-  next14Days: Array<{ date: string; forecast: number }>;
+  historicalMonthly: Array<{ month: string; sales: number }>;
+  predictedMonthly: Array<{ month: string; value: number }>;
 };
 
 export type DashboardForecastResponse = {
@@ -550,9 +685,26 @@ export const createSale = async (payload: SaleInput): Promise<Sale> => {
 
 export const updateSale = async (
   id: number,
-  payload: { status?: string; notes?: string },
+  payload: {
+    status?: string;
+    notes?: string;
+    payment_status?: "PAID" | "PARTIALLY_PAID" | "UNPAID";
+    amount_paid?: number;
+    payment_date?: string | Date | null;
+    payment_method?:
+      | "CASH"
+      | "CARD"
+      | "BANK_TRANSFER"
+      | "UPI"
+      | "CHEQUE"
+      | "OTHER";
+  },
 ): Promise<void> => {
   await apiClient.put(`/sales/${id}`, payload);
+};
+
+export const deleteSale = async (id: number): Promise<void> => {
+  await apiClient.delete(`/sales/${id}`);
 };
 
 export const fetchInvoices = async (): Promise<Invoice[]> => {
@@ -574,6 +726,62 @@ export const createInvoice = async (
 
 export const deleteInvoice = async (invoiceId: number): Promise<void> => {
   await apiClient.delete(`/invoices/${invoiceId}`);
+};
+
+export const createPayment = async (payload: PaymentInput): Promise<void> => {
+  await apiClient.post("/payments", payload);
+};
+
+export const sendInvoiceEmail = async (
+  invoiceId: number,
+): Promise<{ invoiceId: number; status?: string }> => {
+  const response = await apiClient.post(`/invoices/${invoiceId}/send`);
+  return (response.data?.data ?? { invoiceId }) as {
+    invoiceId: number;
+    status?: string;
+  };
+};
+
+export const sendInvoiceReminder = async (
+  invoiceId: number,
+): Promise<{ invoiceId: number }> => {
+  const response = await apiClient.post(`/invoices/${invoiceId}/reminder`);
+  return (response.data?.data ?? { invoiceId }) as { invoiceId: number };
+};
+
+const parsePdfFileName = (
+  contentDisposition: string | undefined,
+  fallback: string,
+) => {
+  if (!contentDisposition) return fallback;
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]).replace(/"/g, "");
+  }
+  const basicMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  if (basicMatch?.[1]) {
+    return basicMatch[1];
+  }
+  return fallback;
+};
+
+export const fetchInvoicePdfFile = async (
+  invoiceId: number,
+  fallbackInvoiceNumber?: string,
+): Promise<{ blob: Blob; fileName: string }> => {
+  const response = await apiClient.get(`/invoices/${invoiceId}/pdf`, {
+    responseType: "blob",
+  });
+
+  const fallback = `${fallbackInvoiceNumber || `invoice-${invoiceId}`}.pdf`;
+  const disposition = response.headers?.["content-disposition"] as
+    | string
+    | undefined;
+
+  return {
+    blob: response.data as Blob,
+    fileName: parsePdfFileName(disposition, fallback),
+  };
 };
 
 export const fetchWarehouses = async (): Promise<Warehouse[]> => {
@@ -763,7 +971,26 @@ export const saveBusinessProfile = async (payload: {
   show_tax_number?: boolean;
   show_payment_qr?: boolean;
 }): Promise<BusinessProfileRecord> => {
-  const response = await apiClient.post("/business-profile", payload);
+  const toOptional = (value?: string) => {
+    const next = value?.trim();
+    return next ? next : undefined;
+  };
+
+  const normalizedPayload = {
+    business_name: payload.business_name.trim(),
+    address: toOptional(payload.address),
+    phone: toOptional(payload.phone),
+    email: toOptional(payload.email),
+    website: toOptional(payload.website),
+    logo_url: toOptional(payload.logo_url),
+    tax_id: toOptional(payload.tax_id),
+    currency: payload.currency.trim() || "INR",
+    show_logo_on_invoice: payload.show_logo_on_invoice,
+    show_tax_number: payload.show_tax_number,
+    show_payment_qr: payload.show_payment_qr,
+  };
+
+  const response = await apiClient.post("/business-profile", normalizedPayload);
   return response.data.data as BusinessProfileRecord;
 };
 

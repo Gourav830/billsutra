@@ -30,10 +30,31 @@ import {
   deleteWarehouse,
   adjustInventory,
   updateSale,
+  deleteSale,
   updateSupplier,
   updateProduct,
   updateCustomer,
 } from "@/lib/apiClient";
+
+const dashboardQueryKeys = [
+  ["dashboard", "overview"],
+  ["dashboard", "sales"],
+  ["dashboard", "inventory"],
+  ["dashboard", "transactions"],
+  ["dashboard", "customers"],
+  ["dashboard", "suppliers"],
+  ["dashboard", "cashflow"],
+  ["dashboard", "forecast"],
+] as const;
+
+const invalidateDashboardQueries = (
+  queryClient: ReturnType<typeof useQueryClient>,
+) =>
+  Promise.all(
+    dashboardQueryKeys.map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey }),
+    ),
+  );
 
 export const useProductsQuery = () =>
   useQuery({ queryKey: ["products"], queryFn: fetchProducts });
@@ -153,7 +174,14 @@ export const useCreatePurchaseMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createPurchase,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["purchases"] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["purchases"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["inventories"] }),
+        queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+        invalidateDashboardQueries(queryClient),
+      ]),
   });
 };
 
@@ -167,7 +195,14 @@ export const useUpdatePurchaseMutation = () => {
       id: number;
       payload: Parameters<typeof updatePurchase>[1];
     }) => updatePurchase(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["purchases"] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["purchases"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["inventories"] }),
+        queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+        invalidateDashboardQueries(queryClient),
+      ]),
   });
 };
 
@@ -188,7 +223,11 @@ export const useCreateInvoiceMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createInvoice,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+        invalidateDashboardQueries(queryClient),
+      ]),
   });
 };
 
@@ -196,7 +235,11 @@ export const useDeleteInvoiceMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteInvoice,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+        invalidateDashboardQueries(queryClient),
+      ]),
   });
 };
 
@@ -204,7 +247,14 @@ export const useCreateSaleMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createSale,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sales"] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["inventories"] }),
+        queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+        invalidateDashboardQueries(queryClient),
+      ]),
   });
 };
 
@@ -218,7 +268,27 @@ export const useUpdateSaleMutation = () => {
       id: number;
       payload: Record<string, unknown>;
     }) => updateSale(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sales"] }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        invalidateDashboardQueries(queryClient),
+      ]),
+  });
+};
+
+export const useDeleteSaleMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteSale,
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["sales"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["inventories"] }),
+        queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+        invalidateDashboardQueries(queryClient),
+      ]),
   });
 };
 
@@ -282,6 +352,7 @@ export const useAdjustInventoryMutation = () => {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ["inventories"] }),
         queryClient.invalidateQueries({ queryKey: ["warehouses"] }),
+        invalidateDashboardQueries(queryClient),
       ]),
   });
 };

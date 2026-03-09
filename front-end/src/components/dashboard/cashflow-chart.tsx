@@ -40,6 +40,10 @@ const CashFlowChart = () => {
     queryFn: fetchDashboardCashflow,
   });
 
+  const net = data?.netCashFlow ?? 0;
+  const netClass =
+    net > 0 ? "text-green-700" : net < 0 ? "text-red-700" : "text-amber-700";
+
   return (
     <Card className="border-[#ecdccf] bg-white/90">
       <CardHeader>
@@ -58,7 +62,10 @@ const CashFlowChart = () => {
               {[
                 { label: "Cash inflow", value: formatCurrency(data.inflow) },
                 { label: "Cash outflow", value: formatCurrency(data.outflow) },
-                { label: "Net profit", value: formatCurrency(data.net) },
+                {
+                  label: "Net cash flow",
+                  value: formatCurrency(data.netCashFlow),
+                },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -67,7 +74,13 @@ const CashFlowChart = () => {
                   <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
                     {item.label}
                   </p>
-                  <p className="mt-3 text-lg font-semibold text-[#1f1b16]">
+                  <p
+                    className={`mt-3 text-lg font-semibold ${
+                      item.label === "Net cash flow"
+                        ? netClass
+                        : "text-[#1f1b16]"
+                    }`}
+                  >
                     {item.value}
                   </p>
                 </div>

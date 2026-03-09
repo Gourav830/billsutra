@@ -21,7 +21,9 @@ import {
   normalizeDesignConfig,
 } from "@/components/invoice/DesignConfigContext";
 import {
+  fetchInvoicePdfFile,
   fetchBusinessProfile,
+  sendInvoiceEmail,
   fetchTemplates,
   fetchUserTemplates,
   saveUserTemplate,
@@ -79,8 +81,20 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
       toast.error("Unable to apply template");
     },
   });
+  const sendInvoiceEmailMutation = useMutation({
+    mutationFn: sendInvoiceEmail,
+  });
   const createInvoice = useCreateInvoiceMutation();
   const { downloadPdf } = useInvoicePdf();
+  const [lastCreatedInvoiceId, setLastCreatedInvoiceId] = useState<
+    number | null
+  >(null);
+  const [lastCreatedInvoiceNumber, setLastCreatedInvoiceNumber] = useState<
+    string | null
+  >(null);
+  const [lastCreatedCustomerEmail, setLastCreatedCustomerEmail] = useState<
+    string | null
+  >(null);
 
   const [form, setForm] = useState<InvoiceFormState>({
     customer_id: "",
@@ -537,7 +551,7 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
     if (validation.summary.length > 0) return;
 
     try {
-      await createInvoice.mutateAsync({
+      const createdInvoice = await createInvoice.mutateAsync({
         customer_id: Number(form.customer_id),
         date: form.date || undefined,
         due_date: form.due_date || undefined,
@@ -552,6 +566,32 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
           tax_rate: item.tax_rate ? Number(item.tax_rate) : undefined,
         })),
       });
+
+      setLastCreatedInvoiceId(createdInvoice.id);
+      setLastCreatedInvoiceNumber(createdInvoice.invoice_number);
+      setLastCreatedCustomerEmail(createdInvoice.customer?.email ?? null);
+
+      try {
+        const pdfFile = await fetchInvoicePdfFile(
+          createdInvoice.id,
+          createdInvoice.invoice_number,
+        );
+        const pdfUrl = URL.createObjectURL(pdfFile.blob);
+        const anchor = document.createElement("a");
+        anchor.href = pdfUrl;
+        anchor.download = pdfFile.fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(pdfUrl);
+      } catch (pdfError) {
+        toast.error(
+          parseServerErrors(
+            pdfError,
+            "Invoice saved, but PDF download failed.",
+          ),
+        );
+      }
 
       setForm({
         customer_id: "",
@@ -573,6 +613,34 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
       setServerError(parseServerErrors(error, "Unable to create invoice."));
     }
   };
+
+  const handleSendInvoiceEmail = useCallback(async () => {
+    if (!lastCreatedInvoiceId) {
+      toast.error("Create and save the invoice first");
+      return;
+    }
+
+    if (!lastCreatedCustomerEmail) {
+      toast.error("Customer email is missing on the saved invoice");
+      return;
+    }
+
+    try {
+      await sendInvoiceEmailMutation.mutateAsync(lastCreatedInvoiceId);
+      toast.success(
+        `Invoice ${lastCreatedInvoiceNumber ?? `#${lastCreatedInvoiceId}`} email sent`,
+      );
+    } catch (error) {
+      setServerError(parseServerErrors(error, "Unable to send invoice email."));
+      toast.error("Unable to send invoice email");
+    }
+  }, [
+    lastCreatedCustomerEmail,
+    lastCreatedInvoiceId,
+    lastCreatedInvoiceNumber,
+    parseServerErrors,
+    sendInvoiceEmailMutation,
+  ]);
 
   return (
     <DashboardLayout
@@ -709,6 +777,11 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
             <InvoiceActions
               onPrint={handlePrint}
               onDownloadPdf={handleDownloadPdf}
+              onSendEmail={handleSendInvoiceEmail}
+              isSendingEmail={sendInvoiceEmailMutation.isPending}
+              canSendEmail={Boolean(
+                lastCreatedInvoiceId && lastCreatedCustomerEmail,
+              )}
             />
           </aside>
         </section>

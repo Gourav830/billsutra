@@ -4,6 +4,9 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardInventory } from "@/lib/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+const formatCurrency = (value: number) => `₹${value.toLocaleString("en-IN")}`;
 
 const InventoryOverview = () => {
   const { data, isLoading, isError } = useQuery({
@@ -31,8 +34,8 @@ const InventoryOverview = () => {
                 { label: "Low stock", value: data.lowStock },
                 { label: "Out of stock", value: data.outOfStock },
                 {
-                  label: "Top selling",
-                  value: data.topSelling?.name ?? "-",
+                  label: "Inventory value",
+                  value: formatCurrency(data.inventoryValue),
                 },
               ].map((item) => (
                 <div
@@ -48,6 +51,18 @@ const InventoryOverview = () => {
                 </div>
               ))}
             </div>
+
+            {data.lowStock > 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium">Low stock warning</p>
+                  <Badge variant="pending">Action needed</Badge>
+                </div>
+                <p className="mt-1 text-xs">
+                  {data.lowStock} products are below their minimum stock level.
+                </p>
+              </div>
+            )}
 
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
@@ -75,7 +90,7 @@ const InventoryOverview = () => {
                     </thead>
                     <tbody className="divide-y divide-[#f2e6dc]">
                       {data.lowStockItems.map((item) => (
-                        <tr key={item.name}>
+                        <tr key={`${item.name}-${item.reorder}`}>
                           <td className="px-4 py-3">{item.name}</td>
                           <td className="px-4 py-3 text-right">{item.stock}</td>
                           <td className="px-4 py-3 text-right">

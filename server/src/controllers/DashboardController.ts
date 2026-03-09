@@ -2,6 +2,14 @@ import type { Request, Response } from "express";
 import { sendResponse } from "../utils/sendResponse.js";
 import prisma from "../config/db.config.js";
 import { InvoiceStatus } from "@prisma/client";
+import {
+  buildMonthlyProfitSeries,
+  buildNotifications,
+  buildSalesForecast,
+  getDailyExpenses,
+  getExpenseTotals,
+  getMonthlyExpenses,
+} from "../services/dashboardAnalyticsService.js";
 
 const toNumber = (value: unknown) => Number(value ?? 0);
 
@@ -49,54 +57,63 @@ class DashboardController {
     }
 
     const now = new Date();
-    const startCurrent = startOfDayUtc(addDays(now, -29));
-    const startPrevious = startOfDayUtc(addDays(now, -59));
-    const endPrevious = startOfDayUtc(addDays(now, -30));
+    const todayStart = startOfDayUtc(now);
+    const tomorrowStart = addDays(todayStart, 1);
+    const yesterdayStart = addDays(todayStart, -1);
+    const weekStart = startOfDayUtc(addDays(now, -6));
+    const previousWeekStart = addDays(weekStart, -7);
+    const monthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+    const previousMonthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
+    );
 
     const [
-      paymentTotals,
       saleTotals,
       purchaseTotals,
-      receivablesTotals,
+      pendingSalesTotals,
       products,
       invoiceCounts,
       overdueInvoices,
-      recentInvoices,
       recentSales,
       recentPurchases,
-      currentSales,
-      previousSales,
-      currentPurchases,
-      previousPurchases,
-      currentPayments,
-      previousPayments,
-      currentReceivables,
-      previousReceivables,
+      dailySales,
+      dailyPurchases,
+      previousDaySales,
+      previousDayPurchases,
+      weeklySales,
+      weeklyPurchases,
+      previousWeeklySales,
+      previousWeeklyPurchases,
+      monthlySales,
+      monthlyPurchases,
+      previousMonthlySales,
+      previousMonthlyPurchases,
+      pendingSalesRows,
+      pendingPurchaseRows,
+      dailyExpenses,
+      previousDailyExpenses,
+      weeklyExpenses,
+      previousWeeklyExpenses,
+      monthlyExpenses,
+      previousMonthlyExpenses,
+      totalExpenses,
     ] = await Promise.all([
-      prisma.payment.aggregate({
-        where: { user_id: userId },
-        _sum: { amount: true },
-      }),
       prisma.sale.aggregate({
         where: { user_id: userId },
         _sum: { total: true },
       }),
       prisma.purchase.aggregate({
         where: { user_id: userId },
-        _sum: { total: true },
+        _sum: { total: true, pendingAmount: true },
       }),
-      prisma.invoice.aggregate({
+      prisma.sale.aggregate({
         where: {
           user_id: userId,
-          status: {
-            in: [
-              InvoiceStatus.SENT,
-              InvoiceStatus.PARTIALLY_PAID,
-              InvoiceStatus.OVERDUE,
-            ],
-          },
+          paymentStatus: { in: ["PARTIALLY_PAID", "UNPAID"] },
         },
-        _sum: { total: true },
+        _sum: { pendingAmount: true },
       }),
       prisma.product.findMany({
         where: { user_id: userId },
@@ -119,92 +136,185 @@ class DashboardController {
         take: 5,
         orderBy: { date: "desc" },
       }),
-      prisma.invoice.findMany({
-        where: { user_id: userId },
-        select: { invoice_number: true, date: true, total: true },
-        orderBy: { date: "desc" },
-        take: 4,
-      }),
       prisma.sale.findMany({
         where: { user_id: userId },
-        select: { id: true, sale_date: true, total: true },
+        select: { id: true, sale_date: true },
         orderBy: { sale_date: "desc" },
         take: 4,
       }),
       prisma.purchase.findMany({
         where: { user_id: userId },
-        select: { id: true, purchase_date: true, total: true },
+        select: { id: true, purchase_date: true },
         orderBy: { purchase_date: "desc" },
         take: 4,
       }),
       prisma.sale.aggregate({
-        where: { user_id: userId, sale_date: { gte: startCurrent } },
+        where: {
+          user_id: userId,
+          sale_date: { gte: todayStart, lt: tomorrowStart },
+        },
+        _sum: { total: true },
+      }),
+      prisma.purchase.aggregate({
+        where: {
+          user_id: userId,
+          purchase_date: { gte: todayStart, lt: tomorrowStart },
+        },
         _sum: { total: true },
       }),
       prisma.sale.aggregate({
         where: {
           user_id: userId,
-          sale_date: { gte: startPrevious, lt: endPrevious },
+          sale_date: { gte: yesterdayStart, lt: todayStart },
         },
         _sum: { total: true },
       }),
       prisma.purchase.aggregate({
-        where: { user_id: userId, purchase_date: { gte: startCurrent } },
+        where: {
+          user_id: userId,
+          purchase_date: { gte: yesterdayStart, lt: todayStart },
+        },
+        _sum: { total: true },
+      }),
+      prisma.sale.aggregate({
+        where: { user_id: userId, sale_date: { gte: weekStart } },
+        _sum: { total: true },
+      }),
+      prisma.purchase.aggregate({
+        where: { user_id: userId, purchase_date: { gte: weekStart } },
+        _sum: { total: true },
+      }),
+      prisma.sale.aggregate({
+        where: {
+          user_id: userId,
+          sale_date: { gte: previousWeekStart, lt: weekStart },
+        },
         _sum: { total: true },
       }),
       prisma.purchase.aggregate({
         where: {
           user_id: userId,
-          purchase_date: { gte: startPrevious, lt: endPrevious },
+          purchase_date: { gte: previousWeekStart, lt: weekStart },
         },
         _sum: { total: true },
       }),
-      prisma.payment.aggregate({
-        where: { user_id: userId, paid_at: { gte: startCurrent } },
-        _sum: { amount: true },
+      prisma.sale.aggregate({
+        where: { user_id: userId, sale_date: { gte: monthStart } },
+        _sum: { total: true },
       }),
-      prisma.payment.aggregate({
+      prisma.purchase.aggregate({
+        where: { user_id: userId, purchase_date: { gte: monthStart } },
+        _sum: { total: true },
+      }),
+      prisma.sale.aggregate({
         where: {
           user_id: userId,
-          paid_at: { gte: startPrevious, lt: endPrevious },
-        },
-        _sum: { amount: true },
-      }),
-      prisma.invoice.aggregate({
-        where: {
-          user_id: userId,
-          date: { gte: startCurrent },
-          status: {
-            in: [
-              InvoiceStatus.SENT,
-              InvoiceStatus.PARTIALLY_PAID,
-              InvoiceStatus.OVERDUE,
-            ],
-          },
+          sale_date: { gte: previousMonthStart, lt: monthStart },
         },
         _sum: { total: true },
       }),
-      prisma.invoice.aggregate({
+      prisma.purchase.aggregate({
         where: {
           user_id: userId,
-          date: { gte: startPrevious, lt: endPrevious },
-          status: {
-            in: [
-              InvoiceStatus.SENT,
-              InvoiceStatus.PARTIALLY_PAID,
-              InvoiceStatus.OVERDUE,
-            ],
-          },
+          purchase_date: { gte: previousMonthStart, lt: monthStart },
         },
         _sum: { total: true },
       }),
+      prisma.sale.findMany({
+        where: {
+          user_id: userId,
+          paymentStatus: { in: ["PARTIALLY_PAID", "UNPAID"] },
+        },
+        select: {
+          id: true,
+          sale_date: true,
+          totalAmount: true,
+          paidAmount: true,
+          pendingAmount: true,
+          paymentStatus: true,
+          customer: { select: { name: true } },
+        },
+        orderBy: [{ sale_date: "desc" }],
+        take: 8,
+      }),
+      prisma.purchase.findMany({
+        where: {
+          user_id: userId,
+          pendingAmount: { gt: 0 },
+        },
+        select: {
+          id: true,
+          supplier: { select: { name: true } },
+          pendingAmount: true,
+        },
+        take: 8,
+      }),
+      getExpenseTotals({ userId, from: todayStart, to: tomorrowStart }),
+      getExpenseTotals({ userId, from: yesterdayStart, to: todayStart }),
+      getExpenseTotals({ userId, from: weekStart }),
+      getExpenseTotals({ userId, from: previousWeekStart, to: weekStart }),
+      getExpenseTotals({ userId, from: monthStart }),
+      getExpenseTotals({ userId, from: previousMonthStart, to: monthStart }),
+      getExpenseTotals({ userId }),
     ]);
 
-    const totalRevenue = toNumber(paymentTotals._sum.amount);
-    const totalSales = toNumber(saleTotals._sum.total);
+    const totalRevenue = toNumber(saleTotals._sum.total);
     const totalPurchases = toNumber(purchaseTotals._sum.total);
-    const receivables = toNumber(receivablesTotals._sum.total);
-    const payables = totalPurchases;
+    const payables = toNumber(purchaseTotals._sum.pendingAmount);
+    const expenses = totalExpenses;
+
+    const toProfit = (
+      salesValue: number,
+      purchasesValue: number,
+      expenseValue: number,
+    ) => salesValue - purchasesValue - expenseValue;
+
+    const todayProfit = toProfit(
+      toNumber(dailySales._sum.total),
+      toNumber(dailyPurchases._sum.total),
+      dailyExpenses,
+    );
+    const previousDayProfit = toProfit(
+      toNumber(previousDaySales._sum.total),
+      toNumber(previousDayPurchases._sum.total),
+      previousDailyExpenses,
+    );
+    const weeklyProfit = toProfit(
+      toNumber(weeklySales._sum.total),
+      toNumber(weeklyPurchases._sum.total),
+      weeklyExpenses,
+    );
+    const previousWeeklyProfit = toProfit(
+      toNumber(previousWeeklySales._sum.total),
+      toNumber(previousWeeklyPurchases._sum.total),
+      previousWeeklyExpenses,
+    );
+    const monthlyProfit = toProfit(
+      toNumber(monthlySales._sum.total),
+      toNumber(monthlyPurchases._sum.total),
+      monthlyExpenses,
+    );
+    const previousMonthlyProfit = toProfit(
+      toNumber(previousMonthlySales._sum.total),
+      toNumber(previousMonthlyPurchases._sum.total),
+      previousMonthlyExpenses,
+    );
+
+    const pendingPayments = toNumber(pendingSalesTotals._sum.pendingAmount);
+
+    const pendingPaymentRows = pendingSalesRows
+      .map((sale) => ({
+        id: sale.id,
+        invoiceNumber: `SI-${sale.id}`,
+        customer: sale.customer?.name ?? "Walk-in",
+        date: sale.sale_date,
+        totalAmount: toNumber(sale.totalAmount),
+        paidAmount: toNumber(sale.paidAmount),
+        pendingAmount: toNumber(sale.pendingAmount),
+        paymentStatus:
+          sale.paymentStatus === "PARTIALLY_PAID" ? "PARTIAL" : "PENDING",
+      }))
+      .filter((sale) => sale.pendingAmount > 0);
 
     const inventoryValue = products.reduce((sum, product) => {
       const unit = toNumber(product.cost ?? product.price);
@@ -212,17 +322,8 @@ class DashboardController {
     }, 0);
 
     const lowStockProducts = products.filter(
-      (product) => product.stock_on_hand <= product.reorder_level,
+      (product) => product.stock_on_hand < product.reorder_level,
     );
-
-    const currentSalesValue = toNumber(currentSales._sum.total);
-    const previousSalesValue = toNumber(previousSales._sum.total);
-    const currentPurchasesValue = toNumber(currentPurchases._sum.total);
-    const previousPurchasesValue = toNumber(previousPurchases._sum.total);
-    const currentPaymentsValue = toNumber(currentPayments._sum.amount);
-    const previousPaymentsValue = toNumber(previousPayments._sum.amount);
-    const currentReceivablesValue = toNumber(currentReceivables._sum.total);
-    const previousReceivablesValue = toNumber(previousReceivables._sum.total);
 
     const invoiceStats = invoiceCounts.reduce(
       (acc, item) => {
@@ -243,10 +344,6 @@ class DashboardController {
     );
 
     const activity = [
-      ...recentInvoices.map((invoice) => ({
-        time: invoice.date,
-        label: `Invoice ${invoice.invoice_number} issued`,
-      })),
       ...recentSales.map((sale) => ({
         time: sale.sale_date,
         label: `Sale #${sale.id} recorded`,
@@ -270,40 +367,69 @@ class DashboardController {
       data: {
         metrics: {
           totalRevenue,
-          totalSales,
+          totalSales: totalRevenue,
           totalPurchases,
-          receivables,
+          expenses,
+          receivables: pendingPayments,
           payables,
+          pendingPayments,
           inventoryValue,
+          profits: {
+            today: todayProfit,
+            weekly: weeklyProfit,
+            monthly: monthlyProfit,
+          },
           changes: {
-            totalRevenue: percentChange(
-              currentPaymentsValue,
-              previousPaymentsValue,
-            ),
-            totalSales: percentChange(currentSalesValue, previousSalesValue),
-            totalPurchases: percentChange(
-              currentPurchasesValue,
-              previousPurchasesValue,
-            ),
-            receivables: percentChange(
-              currentReceivablesValue,
-              previousReceivablesValue,
-            ),
-            payables: percentChange(
-              currentPurchasesValue,
-              previousPurchasesValue,
-            ),
+            totalRevenue: percentChange(totalRevenue, 0),
+            totalSales: percentChange(totalRevenue, 0),
+            totalPurchases: percentChange(totalPurchases, 0),
+            receivables: percentChange(pendingPayments, 0),
+            payables: percentChange(payables, 0),
+            expenses: percentChange(expenses, 0),
+            todayProfit: percentChange(todayProfit, previousDayProfit),
+            weeklyProfit: percentChange(weeklyProfit, previousWeeklyProfit),
+            monthlyProfit: percentChange(monthlyProfit, previousMonthlyProfit),
+            pendingPayments: percentChange(pendingPayments, 0),
             inventoryValue: 0,
           },
         },
+        pendingPayments: pendingPaymentRows.slice(0, 5).map((item) => ({
+          id: item.id,
+          invoiceNumber: item.invoiceNumber,
+          customer: item.customer,
+          totalAmount: item.totalAmount,
+          paidAmount: item.paidAmount,
+          pendingAmount: item.pendingAmount,
+          paymentStatus: item.paymentStatus,
+          date: item.date.toISOString(),
+        })),
         invoiceStats,
         alerts: {
           lowStock: lowStockProducts
             .slice(0, 6)
             .map((item) => `${item.name} (${item.stock_on_hand})`),
           overdueInvoices: overdueInvoices.map((item) => item.invoice_number),
-          supplierPayables: [],
+          supplierPayables: pendingPurchaseRows
+            .slice(0, 5)
+            .map(
+              (item) =>
+                `${item.supplier?.name ?? "Supplier"}: ₹${toNumber(item.pendingAmount).toLocaleString("en-IN")}`,
+            ),
         },
+        notifications: buildNotifications({
+          lowStock: lowStockProducts
+            .slice(0, 6)
+            .map((item) => `${item.name} stock is ${item.stock_on_hand}`),
+          overdueInvoices: overdueInvoices.map((item) => item.invoice_number),
+          pendingSales: pendingPaymentRows.map((row) => ({
+            customer: row.customer,
+            pendingAmount: row.pendingAmount,
+          })),
+          supplierPayables: pendingPurchaseRows.map((row) => ({
+            supplier: row.supplier?.name ?? "Supplier",
+            pendingAmount: toNumber(row.pendingAmount),
+          })),
+        }),
         activity,
       },
     });
@@ -450,7 +576,7 @@ class DashboardController {
     }, 0);
 
     const lowStockProducts = products.filter(
-      (product) => product.stock_on_hand <= product.reorder_level,
+      (product) => product.stock_on_hand < product.reorder_level,
     );
     const outOfStock = products.filter(
       (product) => product.stock_on_hand === 0,
@@ -493,22 +619,27 @@ class DashboardController {
       return sendResponse(res, 401, { message: "Unauthorized" });
     }
 
-    const invoices = await prisma.invoice.findMany({
+    const sales = await prisma.sale.findMany({
       where: { user_id: userId },
       include: { customer: true },
-      orderBy: { date: "desc" },
+      orderBy: { sale_date: "desc" },
       take: 10,
     });
 
-    const transactions = invoices.map((invoice) => ({
-      date: invoice.date.toLocaleDateString("en-US", {
+    const transactions = sales.map((sale) => ({
+      date: sale.sale_date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
       }),
-      invoiceNumber: invoice.invoice_number,
-      customer: invoice.customer?.name ?? "Customer",
-      amount: toNumber(invoice.total),
-      status: invoice.status.replace("_", " "),
+      invoiceNumber: `SI-${sale.id}`,
+      customer: sale.customer?.name ?? "Walk-in",
+      amount: toNumber(sale.totalAmount),
+      paymentStatus:
+        sale.paymentStatus === "PAID"
+          ? "PAID"
+          : sale.paymentStatus === "PARTIALLY_PAID"
+            ? "PARTIAL"
+            : "PENDING",
     }));
 
     return sendResponse(res, 200, { data: { transactions } });
@@ -520,32 +651,98 @@ class DashboardController {
       return sendResponse(res, 401, { message: "Unauthorized" });
     }
 
-    const [total, receivableInvoices, topInvoices] = await Promise.all([
+    const now = new Date();
+    const dayStart = startOfDayUtc(now);
+    const weekStart = startOfDayUtc(addDays(now, -6));
+    const monthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+
+    const [
+      totalRegisteredCustomers,
+      pendingPaymentAgg,
+      topCustomerSales,
+      dailyRegisteredGroups,
+      dailyWalkIns,
+      weeklyRegisteredGroups,
+      weeklyWalkIns,
+      monthlyRegisteredGroups,
+      monthlyWalkIns,
+    ] = await Promise.all([
       prisma.customer.count({ where: { user_id: userId } }),
-      prisma.invoice.aggregate({
+      prisma.sale.aggregate({
         where: {
           user_id: userId,
-          status: {
-            in: [
-              InvoiceStatus.SENT,
-              InvoiceStatus.PARTIALLY_PAID,
-              InvoiceStatus.OVERDUE,
-            ],
-          },
+          paymentStatus: { in: ["PARTIALLY_PAID", "UNPAID"] },
         },
-        _sum: { total: true },
+        _sum: { pendingAmount: true },
       }),
-      prisma.invoice.groupBy({
+      prisma.sale.groupBy({
         by: ["customer_id"],
-        where: { user_id: userId },
+        where: { user_id: userId, customer_id: { not: null } },
         _sum: { total: true },
+        _count: { _all: true },
         orderBy: { _sum: { total: "desc" } },
         take: 5,
+      }),
+      prisma.sale.groupBy({
+        by: ["customer_id"],
+        where: {
+          user_id: userId,
+          customer_id: { not: null },
+          sale_date: { gte: dayStart },
+        },
+        _count: { _all: true },
+      }),
+      prisma.sale.count({
+        where: {
+          user_id: userId,
+          customer_id: null,
+          sale_date: { gte: dayStart },
+        },
+      }),
+      prisma.sale.groupBy({
+        by: ["customer_id"],
+        where: {
+          user_id: userId,
+          customer_id: { not: null },
+          sale_date: { gte: weekStart },
+        },
+        _count: { _all: true },
+      }),
+      prisma.sale.count({
+        where: {
+          user_id: userId,
+          customer_id: null,
+          sale_date: { gte: weekStart },
+        },
+      }),
+      prisma.sale.groupBy({
+        by: ["customer_id"],
+        where: {
+          user_id: userId,
+          customer_id: { not: null },
+          sale_date: { gte: monthStart },
+        },
+        _count: { _all: true },
+      }),
+      prisma.sale.count({
+        where: {
+          user_id: userId,
+          customer_id: null,
+          sale_date: { gte: monthStart },
+        },
       }),
     ]);
 
     const customers = await prisma.customer.findMany({
-      where: { id: { in: topInvoices.map((item) => item.customer_id) } },
+      where: {
+        id: {
+          in: topCustomerSales
+            .map((item) => item.customer_id)
+            .filter((id): id is number => id !== null),
+        },
+      },
       select: { id: true, name: true },
     });
 
@@ -553,15 +750,41 @@ class DashboardController {
       customers.map((customer) => [customer.id, customer.name]),
     );
 
-    const topCustomers = topInvoices.map((item) => ({
-      name: customerMap.get(item.customer_id) ?? "Customer",
-      total: toNumber(item._sum.total),
-    }));
+    const topCustomers = topCustomerSales
+      .filter(
+        (item): item is typeof item & { customer_id: number } =>
+          item.customer_id !== null,
+      )
+      .map((item) => ({
+        name: customerMap.get(item.customer_id) ?? "Customer",
+        totalPurchaseAmount: toNumber(item._sum.total),
+        numberOfOrders: item._count._all,
+      }));
+
+    const toVisitBreakdown = (
+      registeredCustomers: number,
+      walkInCustomers: number,
+    ) => ({
+      registeredCustomers,
+      walkInCustomers,
+      totalCustomers: registeredCustomers + walkInCustomers,
+    });
 
     return sendResponse(res, 200, {
       data: {
-        total,
-        pendingPayments: toNumber(receivableInvoices._sum.total),
+        totalRegisteredCustomers,
+        pendingPayments: toNumber(pendingPaymentAgg._sum.pendingAmount),
+        customerVisits: {
+          daily: toVisitBreakdown(dailyRegisteredGroups.length, dailyWalkIns),
+          weekly: toVisitBreakdown(
+            weeklyRegisteredGroups.length,
+            weeklyWalkIns,
+          ),
+          monthly: toVisitBreakdown(
+            monthlyRegisteredGroups.length,
+            monthlyWalkIns,
+          ),
+        },
         topCustomers,
       },
     });
@@ -583,7 +806,7 @@ class DashboardController {
       }),
       prisma.purchase.aggregate({
         where: { user_id: userId, purchase_date: { gte: start30 } },
-        _sum: { total: true },
+        _sum: { pendingAmount: true },
       }),
     ]);
 
@@ -591,7 +814,7 @@ class DashboardController {
       data: {
         total,
         recentPurchases,
-        outstandingPayables: toNumber(purchaseTotals._sum.total),
+        outstandingPayables: toNumber(purchaseTotals._sum.pendingAmount),
       },
     });
   }
@@ -605,30 +828,43 @@ class DashboardController {
     const now = new Date();
     const start30 = startOfDayUtc(addDays(now, -29));
 
-    const [payments, purchases] = await Promise.all([
-      prisma.payment.findMany({
-        where: { user_id: userId, paid_at: { gte: start30 } },
-        select: { paid_at: true, amount: true },
+    const [salesCollections, purchases, dailyExpenses] = await Promise.all([
+      prisma.sale.findMany({
+        where: {
+          user_id: userId,
+          paidAmount: { gt: 0 },
+          OR: [
+            { paymentDate: { gte: start30 } },
+            { paymentDate: null, sale_date: { gte: start30 } },
+          ],
+        },
+        select: { sale_date: true, paymentDate: true, paidAmount: true },
       }),
       prisma.purchase.findMany({
         where: { user_id: userId, purchase_date: { gte: start30 } },
-        select: { purchase_date: true, total: true },
+        select: { purchase_date: true, paymentDate: true, paidAmount: true },
       }),
+      getDailyExpenses({ userId, from: start30 }),
     ]);
 
     const inflowMap = new Map<string, number>();
-    payments.forEach((payment) => {
-      const key = toDateKey(payment.paid_at);
-      inflowMap.set(key, (inflowMap.get(key) ?? 0) + toNumber(payment.amount));
+    salesCollections.forEach((sale) => {
+      const key = toDateKey(sale.paymentDate ?? sale.sale_date);
+      inflowMap.set(key, (inflowMap.get(key) ?? 0) + toNumber(sale.paidAmount));
     });
 
     const outflowMap = new Map<string, number>();
     purchases.forEach((purchase) => {
-      const key = toDateKey(purchase.purchase_date);
+      const key = toDateKey(purchase.paymentDate ?? purchase.purchase_date);
       outflowMap.set(
         key,
-        (outflowMap.get(key) ?? 0) + toNumber(purchase.total),
+        (outflowMap.get(key) ?? 0) + toNumber(purchase.paidAmount),
       );
+    });
+
+    dailyExpenses.forEach((expense) => {
+      const key = toDateKey(expense.day);
+      outflowMap.set(key, (outflowMap.get(key) ?? 0) + expense.amount);
     });
 
     const series = buildDateSeries(start30, 30).map((key) => ({
@@ -644,7 +880,7 @@ class DashboardController {
       data: {
         inflow,
         outflow,
-        net: inflow - outflow,
+        netCashFlow: inflow - outflow,
         series,
       },
     });
@@ -657,31 +893,45 @@ class DashboardController {
     }
 
     const now = new Date();
-    const start56 = startOfDayUtc(addDays(now, -55));
     const start30 = startOfDayUtc(addDays(now, -29));
     const start6Months = new Date(
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1),
     );
 
-    const [sales, purchases] = await Promise.all([
+    const [
+      salesLast30,
+      purchasesLast30,
+      salesMonthlyRaw,
+      purchasesMonthlyRaw,
+      expenseMonthly,
+    ] = await Promise.all([
       prisma.sale.findMany({
-        where: { user_id: userId, sale_date: { gte: start56 } },
+        where: { user_id: userId, sale_date: { gte: start30 } },
         select: { sale_date: true, total: true },
       }),
       prisma.purchase.findMany({
-        where: { user_id: userId, purchase_date: { gte: start56 } },
+        where: { user_id: userId, purchase_date: { gte: start30 } },
         select: { purchase_date: true, total: true },
       }),
+      prisma.sale.findMany({
+        where: { user_id: userId, sale_date: { gte: start6Months } },
+        select: { sale_date: true, total: true },
+      }),
+      prisma.purchase.findMany({
+        where: { user_id: userId, purchase_date: { gte: start6Months } },
+        select: { purchase_date: true, total: true },
+      }),
+      getMonthlyExpenses({ userId, from: start6Months }),
     ]);
 
     const salesByDate = new Map<string, number>();
-    sales.forEach((sale) => {
+    salesLast30.forEach((sale) => {
       const key = toDateKey(sale.sale_date);
       salesByDate.set(key, (salesByDate.get(key) ?? 0) + toNumber(sale.total));
     });
 
     const purchasesByDate = new Map<string, number>();
-    purchases.forEach((purchase) => {
+    purchasesLast30.forEach((purchase) => {
       const key = toDateKey(purchase.purchase_date);
       purchasesByDate.set(
         key,
@@ -689,92 +939,70 @@ class DashboardController {
       );
     });
 
+    const dailyExpenseByDate = new Map<string, number>();
+    const dailyExpenseRows = await getDailyExpenses({ userId, from: start30 });
+    dailyExpenseRows.forEach((row) => {
+      const key = toDateKey(row.day);
+      dailyExpenseByDate.set(
+        key,
+        (dailyExpenseByDate.get(key) ?? 0) + row.amount,
+      );
+    });
+
     const last30 = buildDateSeries(start30, 30).map((key) => {
       const revenue = salesByDate.get(key) ?? 0;
-      const cost = purchasesByDate.get(key) ?? 0;
-      return { date: key, revenue, cost, profit: revenue - cost };
-    });
-
-    const monthlyMap = new Map<
-      string,
-      { revenue: number; cost: number; labelDate: Date }
-    >();
-    for (let i = 0; i < 6; i += 1) {
-      const date = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (5 - i), 1),
-      );
-      monthlyMap.set(toMonthKey(date), {
-        revenue: 0,
-        cost: 0,
-        labelDate: date,
-      });
-    }
-
-    sales.forEach((sale) => {
-      if (sale.sale_date < start6Months) {
-        return;
-      }
-      const key = toMonthKey(sale.sale_date);
-      const entry = monthlyMap.get(key);
-      if (entry) {
-        entry.revenue += toNumber(sale.total);
-      }
-    });
-
-    purchases.forEach((purchase) => {
-      if (purchase.purchase_date < start6Months) {
-        return;
-      }
-      const key = toMonthKey(purchase.purchase_date);
-      const entry = monthlyMap.get(key);
-      if (entry) {
-        entry.cost += toNumber(purchase.total);
-      }
-    });
-
-    const monthly = Array.from(monthlyMap.values()).map((entry) => {
-      const profit = entry.revenue - entry.cost;
-      const margin = entry.revenue === 0 ? 0 : (profit / entry.revenue) * 100;
+      const purchaseCost = purchasesByDate.get(key) ?? 0;
+      const expenses = dailyExpenseByDate.get(key) ?? 0;
+      const totalCost = purchaseCost + expenses;
       return {
-        month: toMonthLabel(entry.labelDate),
-        profit,
-        margin,
+        date: key,
+        revenue,
+        cost: totalCost,
+        expenses,
+        profit: revenue - totalCost,
       };
     });
 
-    const salesByDow = new Map<number, { total: number; count: number }>();
-    for (let i = 0; i < 7; i += 1) {
-      salesByDow.set(i, { total: 0, count: 0 });
-    }
-
-    sales.forEach((sale) => {
-      const dayKey = dayOfWeekKey(sale.sale_date);
-      const bucket = salesByDow.get(dayKey);
-      if (bucket) {
-        bucket.total += toNumber(sale.total);
-        bucket.count += 1;
-      }
+    const monthlyProfitSeries = buildMonthlyProfitSeries({
+      months: 6,
+      sales: salesMonthlyRaw.map((item) => ({
+        date: item.sale_date,
+        total: item.total,
+      })),
+      purchases: purchasesMonthlyRaw.map((item) => ({
+        date: item.purchase_date,
+        total: item.total,
+      })),
+      expenses: expenseMonthly,
+      fromDate: now,
     });
 
-    const avgByDow = new Map<number, number>();
-    salesByDow.forEach((bucket, key) => {
-      avgByDow.set(key, bucket.count === 0 ? 0 : bucket.total / bucket.count);
-    });
+    const monthly = monthlyProfitSeries.map((entry) => ({
+      month: entry.month,
+      revenue: entry.revenue,
+      totalCost: entry.totalCost,
+      expenses: entry.expenses,
+      profit: entry.profit,
+      margin: entry.revenue === 0 ? 0 : (entry.profit / entry.revenue) * 100,
+    }));
 
-    const next14Days = buildDateSeries(startOfDayUtc(addDays(now, 1)), 14).map(
-      (key) => {
-        const date = new Date(key);
-        const forecast = avgByDow.get(dayOfWeekKey(date)) ?? 0;
-        return { date: key, forecast };
-      },
+    const forecast = buildSalesForecast(
+      monthlyProfitSeries.map((entry) => ({
+        month: entry.month,
+        value: entry.revenue,
+      })),
     );
 
     return sendResponse(res, 200, {
       data: {
         profit: { monthly, last30 },
         forecast: {
-          method: "seasonal-dow-8w",
-          next14Days,
+          method: "moving-average-3m",
+          historicalMonthly: monthlyProfitSeries.map((entry) => ({
+            month: entry.month,
+            sales: entry.revenue,
+          })),
+          predictedMonthly: forecast,
         },
       },
     });

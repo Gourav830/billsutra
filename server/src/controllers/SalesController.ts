@@ -1,16 +1,44 @@
 import type { Request, Response } from "express";
 import { sendResponse } from "../utils/sendResponse.js";
 import prisma from "../config/db.config.js";
-import { SaleStatus, StockReason } from "@prisma/client";
+import {
+  PaymentMethod,
+  PaymentStatus,
+  SaleStatus,
+  StockReason,
+} from "@prisma/client";
 import type { z } from "zod";
 import {
   saleCreateSchema,
   saleUpdateSchema,
 } from "../validations/apiValidations.js";
+import { computePaymentState } from "../utils/paymentCalculations.js";
 
 type SaleCreateInput = z.infer<typeof saleCreateSchema>;
 type SaleUpdateInput = z.infer<typeof saleUpdateSchema>;
 type SaleItemInput = SaleCreateInput["items"][number];
+
+const toNumber = (value: unknown) => Number(value ?? 0);
+
+const decorateSaleFinancials = <T extends { total: unknown }>(
+  sale: T & {
+    totalAmount?: unknown;
+    paidAmount?: unknown;
+    pendingAmount?: unknown;
+    paymentStatus?: PaymentStatus;
+    paymentDate?: Date | null;
+    paymentMethod?: PaymentMethod | null;
+    notes?: string | null;
+  },
+) => ({
+  ...sale,
+  totalAmount: toNumber(sale.totalAmount ?? sale.total),
+  paidAmount: toNumber(sale.paidAmount),
+  pendingAmount: toNumber(sale.pendingAmount ?? sale.total),
+  paymentStatus: sale.paymentStatus ?? PaymentStatus.UNPAID,
+  paymentDate: sale.paymentDate ?? null,
+  paymentMethod: sale.paymentMethod ?? null,
+});
 
 class SalesController {
   static async index(req: Request, res: Response) {
@@ -25,7 +53,9 @@ class SalesController {
       orderBy: { created_at: "desc" },
     });
 
-    return sendResponse(res, 200, { data: sales });
+    return sendResponse(res, 200, {
+      data: sales.map((sale) => decorateSaleFinancials(sale)),
+    });
   }
 
   static async store(req: Request, res: Response) {
@@ -35,6 +65,7 @@ class SalesController {
     }
 
     const body: SaleCreateInput = req.body;
+    const { status, notes } = body;
 
     if (body.customer_id) {
       const customer = await prisma.customer.findFirst({
@@ -139,6 +170,13 @@ class SalesController {
     }
 
     const total = subtotal + tax;
+    const paymentState = computePaymentState({
+      totalAmount: total,
+      paidAmount: body.amount_paid,
+      paymentStatus: body.payment_status as PaymentStatus | undefined,
+      paymentDate: body.payment_date,
+      paymentMethod: body.payment_method,
+    });
 
     const sale = await prisma.$transaction(async (tx) => {
       const created = await tx.sale.create({
@@ -150,6 +188,12 @@ class SalesController {
           subtotal,
           tax,
           total,
+          totalAmount: paymentState.totalAmount,
+          paidAmount: paymentState.paidAmount,
+          pendingAmount: paymentState.pendingAmount,
+          paymentStatus: paymentState.paymentStatus,
+          paymentDate: paymentState.paymentDate,
+          paymentMethod: paymentState.paymentMethod,
           notes: body.notes,
           items: { create: items },
         },
@@ -189,7 +233,10 @@ class SalesController {
       return created;
     });
 
-    return sendResponse(res, 201, { message: "Sale recorded", data: sale });
+    return sendResponse(res, 201, {
+      message: "Sale recorded",
+      data: decorateSaleFinancials(sale),
+    });
   }
 
   static async show(req: Request, res: Response) {
@@ -208,7 +255,7 @@ class SalesController {
       return sendResponse(res, 404, { message: "Sale not found" });
     }
 
-    return sendResponse(res, 200, { data: sale });
+    return sendResponse(res, 200, { data: decorateSaleFinancials(sale) });
   }
 
   static async update(req: Request, res: Response) {
@@ -220,17 +267,87 @@ class SalesController {
     const id = Number(req.params.id);
     const body: SaleUpdateInput = req.body;
     const { status, notes } = body;
-
-    const updated = await prisma.sale.updateMany({
+    const existing = await prisma.sale.findFirst({
       where: { id, user_id: userId },
-      data: { status, notes },
+      select: {
+        id: true,
+        total: true,
+        paidAmount: true,
+        paymentStatus: true,
+        paymentDate: true,
+        paymentMethod: true,
+      },
     });
 
-    if (!updated.count) {
+    if (!existing) {
       return sendResponse(res, 404, { message: "Sale not found" });
     }
 
+    const paymentState = computePaymentState({
+      totalAmount: toNumber(existing.total),
+      paidAmount: body.amount_paid ?? toNumber(existing.paidAmount),
+      paymentStatus:
+        (body.payment_status as PaymentStatus | undefined) ??
+        existing.paymentStatus,
+      paymentDate: body.payment_date ?? existing.paymentDate ?? undefined,
+      paymentMethod: body.payment_method ?? existing.paymentMethod ?? undefined,
+    });
+
+    await prisma.sale.update({
+      where: { id: existing.id },
+      data: {
+        status,
+        notes,
+        paidAmount: paymentState.paidAmount,
+        pendingAmount: paymentState.pendingAmount,
+        paymentStatus: paymentState.paymentStatus,
+        paymentDate: paymentState.paymentDate,
+        paymentMethod: paymentState.paymentMethod,
+      },
+    });
+
     return sendResponse(res, 200, { message: "Sale updated" });
+  }
+
+  static async destroy(req: Request, res: Response) {
+    const userId = req.user?.id;
+    if (!userId) {
+      return sendResponse(res, 401, { message: "Unauthorized" });
+    }
+
+    const id = Number(req.params.id);
+    const sale = await prisma.sale.findFirst({
+      where: { id, user_id: userId },
+      include: { items: true },
+    });
+
+    if (!sale) {
+      return sendResponse(res, 404, { message: "Sale not found" });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      for (const item of sale.items) {
+        if (!item.product_id) continue;
+
+        await tx.product.update({
+          where: { id: item.product_id },
+          data: { stock_on_hand: { increment: item.quantity } },
+        });
+
+        await tx.stockMovement.create({
+          data: {
+            product_id: item.product_id,
+            change: item.quantity,
+            reason: StockReason.RETURN,
+            note: `Sale reversal ${sale.id}`,
+          },
+        });
+      }
+
+      await tx.sale.delete({ where: { id: sale.id } });
+    });
+
+    return sendResponse(res, 200, { message: "Sale deleted" });
   }
 }
 

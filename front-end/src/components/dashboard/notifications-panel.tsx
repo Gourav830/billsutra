@@ -2,16 +2,25 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { fetchDashboardOverview } from "@/lib/apiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const NotificationsPanel = () => {
+  const router = useRouter();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["dashboard", "overview"],
     queryFn: fetchDashboardOverview,
   });
 
-  const alerts = data?.alerts;
+  const notifications = data?.notifications ?? [];
+
+  const typeVariant = (type: string) => {
+    if (type === "LOW_STOCK") return "pending";
+    if (type === "PENDING_INVOICE") return "overdue";
+    return "default";
+  };
 
   return (
     <Card className="border-[#ecdccf] bg-[#fff7ef]">
@@ -25,37 +34,31 @@ const NotificationsPanel = () => {
         {isError && (
           <p className="text-sm text-[#b45309]">Unable to load alerts.</p>
         )}
-        {!isLoading && !isError && alerts && (
+        {!isLoading && !isError && (
           <>
-            {alerts.lowStock.length === 0 &&
-            alerts.overdueInvoices.length === 0 &&
-            alerts.supplierPayables.length === 0 ? (
+            {notifications.length === 0 ? (
               <p className="text-sm text-[#8a6d56]">No alerts right now.</p>
             ) : (
               <div className="grid gap-2 text-sm">
-                {alerts.lowStock.map((item) => (
-                  <div
-                    key={`low-${item}`}
-                    className="rounded-lg border border-[#f2e6dc] bg-white px-3 py-2"
+                {notifications.map((notification) => (
+                  <button
+                    key={notification.id}
+                    type="button"
+                    onClick={() => router.push(notification.redirectUrl)}
+                    className="rounded-lg border border-[#f2e6dc] bg-white px-3 py-2 text-left transition hover:bg-[#fff6ed]"
                   >
-                    Low stock: {item}
-                  </div>
-                ))}
-                {alerts.overdueInvoices.map((item) => (
-                  <div
-                    key={`overdue-${item}`}
-                    className="rounded-lg border border-[#f2e6dc] bg-white px-3 py-2"
-                  >
-                    Overdue invoice: {item}
-                  </div>
-                ))}
-                {alerts.supplierPayables.map((item) => (
-                  <div
-                    key={`payable-${item}`}
-                    className="rounded-lg border border-[#f2e6dc] bg-white px-3 py-2"
-                  >
-                    Supplier payment due: {item}
-                  </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-[#1f1b16]">
+                        {notification.title}
+                      </p>
+                      <Badge variant={typeVariant(notification.type)}>
+                        {notification.type.replaceAll("_", " ")}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-[#8a6d56]">
+                      {notification.message}
+                    </p>
+                  </button>
                 ))}
               </div>
             )}

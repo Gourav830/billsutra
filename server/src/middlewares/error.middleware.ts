@@ -16,6 +16,12 @@ const mapPrismaKnownError = (
       return { statusCode: 409, message: "Resource already exists" };
     case "P2025":
       return { statusCode: 404, message: "Record not found" };
+    case "P2022":
+      return {
+        statusCode: 500,
+        message:
+          "Database schema is out of sync with the API. Run Prisma migrations and restart the server.",
+      };
     default:
       return { statusCode: 400, message: "Database request failed" };
   }

@@ -73,6 +73,7 @@ export async function loginAction(prevState: any, formData: FormData) {
       email: formData.get("email"),
       password: formData.get("password"),
     });
+    const authPayload = response.data?.data ?? response.data;
     return {
       status: 200,
       message: "Credentials matched loging you shortly!",
@@ -80,7 +81,7 @@ export async function loginAction(prevState: any, formData: FormData) {
       data: {
         email: formData.get("email"),
         password: formData.get("password"),
-        token: response.data?.token ?? null,
+        token: authPayload?.token ?? null,
       },
     };
   } catch (error) {

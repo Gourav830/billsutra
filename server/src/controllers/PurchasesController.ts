@@ -1,16 +1,38 @@
 import type { Request, Response } from "express";
 import { sendResponse } from "../utils/sendResponse.js";
 import prisma from "../config/db.config.js";
-import { StockReason } from "@prisma/client";
+import { PaymentMethod, PaymentStatus, StockReason } from "@prisma/client";
 import type { z } from "zod";
 import {
   purchaseCreateSchema,
   purchaseUpdateSchema,
 } from "../validations/apiValidations.js";
+import { computePaymentState } from "../utils/paymentCalculations.js";
 
 type PurchaseCreateInput = z.infer<typeof purchaseCreateSchema>;
 type PurchaseItemInput = PurchaseCreateInput["items"][number];
 type PurchaseUpdateInput = z.infer<typeof purchaseUpdateSchema>;
+
+const toNumber = (value: unknown) => Number(value ?? 0);
+
+const decoratePurchaseFinancials = <T extends { total: unknown }>(
+  purchase: T & {
+    totalAmount?: unknown;
+    paidAmount?: unknown;
+    pendingAmount?: unknown;
+    paymentStatus?: PaymentStatus;
+    paymentDate?: Date | null;
+    paymentMethod?: PaymentMethod | null;
+  },
+) => ({
+  ...purchase,
+  totalAmount: toNumber(purchase.totalAmount ?? purchase.total),
+  paidAmount: toNumber(purchase.paidAmount),
+  pendingAmount: toNumber(purchase.pendingAmount ?? purchase.total),
+  paymentStatus: purchase.paymentStatus ?? PaymentStatus.UNPAID,
+  paymentDate: purchase.paymentDate ?? null,
+  paymentMethod: purchase.paymentMethod ?? null,
+});
 
 class PurchasesController {
   static async index(req: Request, res: Response) {
@@ -25,7 +47,9 @@ class PurchasesController {
       orderBy: { created_at: "desc" },
     });
 
-    return sendResponse(res, 200, { data: purchases });
+    return sendResponse(res, 200, {
+      data: purchases.map((purchase) => decoratePurchaseFinancials(purchase)),
+    });
   }
 
   static async store(req: Request, res: Response) {
@@ -103,6 +127,13 @@ class PurchasesController {
     }
 
     const total = subtotal + tax;
+    const paymentState = computePaymentState({
+      totalAmount: total,
+      paidAmount: body.amount_paid,
+      paymentStatus: body.payment_status as PaymentStatus | undefined,
+      paymentDate: body.payment_date,
+      paymentMethod: body.payment_method,
+    });
 
     const purchase = await prisma.$transaction(async (tx) => {
       const created = await tx.purchase.create({
@@ -114,6 +145,12 @@ class PurchasesController {
           subtotal,
           tax,
           total,
+          totalAmount: paymentState.totalAmount,
+          paidAmount: paymentState.paidAmount,
+          pendingAmount: paymentState.pendingAmount,
+          paymentStatus: paymentState.paymentStatus,
+          paymentDate: paymentState.paymentDate,
+          paymentMethod: paymentState.paymentMethod,
           notes: body.notes,
           items: { create: items },
         },
@@ -160,7 +197,7 @@ class PurchasesController {
 
     return sendResponse(res, 201, {
       message: "Purchase recorded",
-      data: purchase,
+      data: decoratePurchaseFinancials(purchase),
     });
   }
 
@@ -180,7 +217,9 @@ class PurchasesController {
       return sendResponse(res, 404, { message: "Purchase not found" });
     }
 
-    return sendResponse(res, 200, { data: purchase });
+    return sendResponse(res, 200, {
+      data: decoratePurchaseFinancials(purchase),
+    });
   }
 
   static async update(req: Request, res: Response) {
@@ -268,6 +307,15 @@ class PurchasesController {
     }
 
     const total = subtotal + tax;
+    const paymentState = computePaymentState({
+      totalAmount: total,
+      paidAmount: body.amount_paid ?? toNumber(purchase.paidAmount),
+      paymentStatus:
+        (body.payment_status as PaymentStatus | undefined) ??
+        purchase.paymentStatus,
+      paymentDate: body.payment_date ?? purchase.paymentDate ?? undefined,
+      paymentMethod: body.payment_method ?? purchase.paymentMethod ?? undefined,
+    });
 
     const aggregateByProduct = (
       list: Array<{ product_id: number; quantity: number }>,
@@ -318,6 +366,12 @@ class PurchasesController {
           subtotal,
           tax,
           total,
+          totalAmount: paymentState.totalAmount,
+          paidAmount: paymentState.paidAmount,
+          pendingAmount: paymentState.pendingAmount,
+          paymentStatus: paymentState.paymentStatus,
+          paymentDate: paymentState.paymentDate,
+          paymentMethod: paymentState.paymentMethod,
           items: {
             deleteMany: {},
             create: items,
@@ -391,7 +445,7 @@ class PurchasesController {
 
     return sendResponse(res, 200, {
       message: "Purchase updated",
-      data: updated,
+      data: decoratePurchaseFinancials(updated),
     });
   }
 }

@@ -62,8 +62,8 @@ export const authOptions: AuthOptions = {
           };
 
           const { data } = await axios.post(check_credential, payload);
-
-          const user = data?.user;
+          const authPayload = data?.data ?? data;
+          const user = authPayload?.user;
 
           if (!user) return null;
 
@@ -71,7 +71,7 @@ export const authOptions: AuthOptions = {
             id: user.id,
             name: user.name,
             email: user.email,
-            token: data?.token,
+            token: authPayload?.token ?? null,
             provider: "credentials",
           };
         } catch (error) {
@@ -104,9 +104,10 @@ export const authOptions: AuthOptions = {
           };
 
           const { data } = await axios.post(LOGIN_URL, payload);
+          const authPayload = data?.data ?? data;
 
-          user.id = data?.user?.id?.toString();
-          user.token = data?.token ?? data?.user?.token ?? null;
+          user.id = authPayload?.user?.id?.toString();
+          user.token = authPayload?.token ?? authPayload?.user?.token ?? null;
           user.provider = account?.provider;
         }
 

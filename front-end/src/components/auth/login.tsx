@@ -24,8 +24,13 @@ export default function Login() {
       toast.error(state.message);
     } else if (state.status === 200) {
       toast.success(state.message);
-      if (state.data?.token) {
-        window.localStorage.setItem("token", state.data.token as string);
+      const rawToken = state.data?.token;
+      const token =
+        typeof rawToken === "string" ? rawToken.trim() : String(rawToken ?? "");
+      if (token && token !== "undefined" && token !== "null") {
+        window.localStorage.setItem("token", token);
+      } else {
+        window.localStorage.removeItem("token");
       }
       signIn("credentials", {
         email: state.data?.email,

@@ -7,7 +7,7 @@ const actions = [
   { label: "Create Invoice", href: "/invoices" },
   { label: "Add Product", href: "/products" },
   { label: "Add Customer", href: "/customers" },
-  { label: "Record Payment", href: "/payments" },
+  { label: "Record Payment", href: "/invoices" },
   { label: "Add Purchase", href: "/purchases" },
 ];
 

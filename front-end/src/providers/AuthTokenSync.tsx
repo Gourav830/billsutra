@@ -9,8 +9,14 @@ const AuthTokenSync = () => {
   useEffect(() => {
     if (status === "loading") return;
 
-    const token = data?.user?.token;
-    if (token) {
+    const token = data?.user?.token?.trim();
+    const isValidToken =
+      typeof token === "string" &&
+      token.length > 0 &&
+      token !== "undefined" &&
+      token !== "null";
+
+    if (isValidToken) {
       window.localStorage.setItem("token", token);
       return;
     }

@@ -53,6 +53,10 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
     supplier_id: "",
     warehouse_id: "",
     purchase_date: "",
+    payment_status: "UNPAID",
+    amount_paid: "",
+    payment_date: "",
+    payment_method: "",
     notes: "",
   });
   const [items, setItems] = useState([
@@ -76,6 +80,12 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
   >({});
   const [supplierError, setSupplierError] = useState<string | null>(null);
 
+  const paymentStatusBadgeClass = (status: string) => {
+    if (status === "PAID") return "bg-emerald-100 text-emerald-700";
+    if (status === "PARTIALLY_PAID") return "bg-amber-100 text-amber-700";
+    return "bg-rose-100 text-rose-700";
+  };
+
   const purchases = useMemo(() => data ?? [], [data]);
   const productsList = products ?? [];
   const supplierList = suppliers ?? [];
@@ -87,9 +97,24 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
     value: string,
   ) => {
     setItems((prev) =>
-      prev.map((item, idx) =>
-        idx === index ? { ...item, [key]: value } : item,
-      ),
+      prev.map((item, idx) => {
+        if (idx !== index) return item;
+
+        if (key === "product_id") {
+          const selectedProduct = productsList.find(
+            (product) => String(product.id) === value,
+          );
+
+          return {
+            ...item,
+            product_id: value,
+            unit_cost:
+              selectedProduct?.cost ?? selectedProduct?.price ?? item.unit_cost,
+          };
+        }
+
+        return { ...item, [key]: value };
+      }),
     );
     setLineItemSummary([]);
     setLineItemErrors([]);
@@ -116,6 +141,10 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
       supplier_id: "",
       warehouse_id: "",
       purchase_date: "",
+      payment_status: "UNPAID",
+      amount_paid: "",
+      payment_date: "",
+      payment_method: "",
       notes: "",
     });
     setItems([{ product_id: "", quantity: "1", unit_cost: "", tax_rate: "" }]);
@@ -214,6 +243,12 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
       purchase_date: purchase.purchase_date
         ? new Date(purchase.purchase_date).toISOString().slice(0, 10)
         : "",
+      payment_status: purchase.paymentStatus ?? "UNPAID",
+      amount_paid: String(purchase.paidAmount ?? 0),
+      payment_date: purchase.paymentDate
+        ? new Date(purchase.paymentDate).toISOString().slice(0, 10)
+        : "",
+      payment_method: purchase.paymentMethod ?? "",
       notes: purchase.notes ?? "",
     });
     setItems(
@@ -237,6 +272,21 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
       supplier_id: form.supplier_id ? Number(form.supplier_id) : undefined,
       warehouse_id: form.warehouse_id ? Number(form.warehouse_id) : undefined,
       purchase_date: form.purchase_date || undefined,
+      payment_status: form.payment_status as
+        | "PAID"
+        | "PARTIALLY_PAID"
+        | "UNPAID",
+      amount_paid: form.amount_paid ? Number(form.amount_paid) : undefined,
+      payment_date: form.payment_date || undefined,
+      payment_method:
+        (form.payment_method as
+          | "CASH"
+          | "CARD"
+          | "BANK_TRANSFER"
+          | "UPI"
+          | "CHEQUE"
+          | "OTHER"
+          | "") || undefined,
       notes: form.notes.trim() || undefined,
       items: items.map((item) => ({
         product_id: Number(item.product_id),
@@ -523,6 +573,76 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
                   placeholder="Invoice reference"
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="payment_status">Payment status</Label>
+                <select
+                  id="payment_status"
+                  className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                  value={form.payment_status}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      payment_status: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="UNPAID">UNPAID</option>
+                  <option value="PARTIALLY_PAID">PARTIALLY PAID</option>
+                  <option value="PAID">PAID</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="amount_paid">Paid amount</Label>
+                <Input
+                  id="amount_paid"
+                  type="number"
+                  min="0"
+                  value={form.amount_paid}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      amount_paid: event.target.value,
+                    }))
+                  }
+                  placeholder="0"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="payment_date">Payment date</Label>
+                <Input
+                  id="payment_date"
+                  type="date"
+                  value={form.payment_date}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      payment_date: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="payment_method">Payment method</Label>
+                <select
+                  id="payment_method"
+                  className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                  value={form.payment_method}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      payment_method: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select method</option>
+                  <option value="CASH">CASH</option>
+                  <option value="CARD">CARD</option>
+                  <option value="BANK_TRANSFER">BANK TRANSFER</option>
+                  <option value="UPI">UPI</option>
+                  <option value="CHEQUE">CHEQUE</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </div>
 
               <div className="grid gap-3">
                 <div className="flex items-center justify-between">
@@ -706,7 +826,22 @@ const PurchasesClient = ({ name, image }: PurchasesClientProps) => {
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-sm text-[#5c4b3b]">
-                        <span>₹{Number(purchase.total).toFixed(2)}</span>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${paymentStatusBadgeClass(
+                            purchase.paymentStatus,
+                          )}`}
+                        >
+                          {purchase.paymentStatus.replace("_", " ")}
+                        </span>
+                        <span>
+                          Total ₹{Number(purchase.totalAmount).toFixed(2)}
+                        </span>
+                        <span>
+                          Paid ₹{Number(purchase.paidAmount).toFixed(2)}
+                        </span>
+                        <span>
+                          Pending ₹{Number(purchase.pendingAmount).toFixed(2)}
+                        </span>
                         <Button
                           type="button"
                           variant="outline"

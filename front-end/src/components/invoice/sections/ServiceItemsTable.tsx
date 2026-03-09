@@ -7,32 +7,34 @@ const ServiceItemsTable = ({ data, theme }: InvoiceSectionProps) => {
   const totals = calculateTotals(data.items);
 
   return (
-    <section className="rounded-2xl border border-slate-200" style={style}>
+    <section className="border border-slate-400 bg-white" style={style}>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-xs uppercase tracking-[0.25em] opacity-70">
+        <p className="px-2 pt-2 text-[0.82em] font-semibold uppercase tracking-[0.12em]">
           Service items
         </p>
-        <p className="text-sm opacity-70">
+        <p className="px-2 pt-2 text-[0.92em]">
           Subtotal: {formatCurrency(totals.subtotal, data.business.currency)}
         </p>
       </div>
-      <div className="mt-4 grid gap-3">
+      <div className="mt-2 grid gap-0 border-t border-slate-300">
         {data.items.map((item) => {
           const lineTotal = item.quantity * item.unitPrice;
           const taxAmount = lineTotal * ((item.taxRate ?? 0) / 100);
           return (
             <div
               key={item.name}
-              className="rounded-xl border border-slate-200 px-4 py-3"
+              className="border-b border-slate-300 px-3 py-2"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-semibold">{item.name}</p>
                   {item.description ? (
-                    <p className="text-xs opacity-70">{item.description}</p>
+                    <p className="text-[0.78em] opacity-70">
+                      {item.description}
+                    </p>
                   ) : null}
                 </div>
-                <div className="text-right text-sm opacity-80">
+                <div className="text-right text-[0.95em] opacity-80">
                   <p>Qty: {item.quantity}</p>
                   <p>
                     Rate:{" "}

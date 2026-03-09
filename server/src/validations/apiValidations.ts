@@ -95,14 +95,33 @@ export const userPasswordUpdateSchema = z
     path: ["confirm_password"],
   });
 
+const emptyToUndefined = (value: unknown) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+};
+
+const optionalTrimmedString = z.preprocess(
+  emptyToUndefined,
+  z.string().optional(),
+);
+const optionalEmailString = z.preprocess(
+  emptyToUndefined,
+  z.string().email().optional(),
+);
+const optionalUrlString = z.preprocess(
+  emptyToUndefined,
+  z.string().url().optional(),
+);
+
 export const businessProfileUpsertSchema = z.object({
   business_name: z.string().min(2),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email().optional(),
-  website: z.string().optional(),
-  logo_url: z.string().url().optional(),
-  tax_id: z.string().optional(),
+  address: optionalTrimmedString,
+  phone: optionalTrimmedString,
+  email: optionalEmailString,
+  website: optionalTrimmedString,
+  logo_url: optionalUrlString,
+  tax_id: optionalTrimmedString,
   currency: z.string().min(1),
   show_logo_on_invoice: z.boolean().optional(),
   show_tax_number: z.boolean().optional(),
@@ -200,6 +219,10 @@ export const purchaseCreateSchema = z.object({
   supplier_id: z.coerce.number().int().positive().optional(),
   warehouse_id: z.coerce.number().int().positive().optional(),
   purchase_date: z.coerce.date().optional(),
+  payment_status: z.enum(["UNPAID", "PARTIALLY_PAID", "PAID"]).optional(),
+  amount_paid: z.coerce.number().nonnegative().optional(),
+  payment_date: z.coerce.date().optional(),
+  payment_method: z.nativeEnum(PaymentMethod).optional(),
   notes: z.string().optional(),
   items: z.array(purchaseItemSchema).min(1),
 });
@@ -208,6 +231,10 @@ export const purchaseUpdateSchema = z.object({
   supplier_id: z.coerce.number().int().positive().optional(),
   warehouse_id: z.coerce.number().int().positive().optional(),
   purchase_date: z.coerce.date().optional(),
+  payment_status: z.enum(["UNPAID", "PARTIALLY_PAID", "PAID"]).optional(),
+  amount_paid: z.coerce.number().nonnegative().optional(),
+  payment_date: z.coerce.date().optional(),
+  payment_method: z.nativeEnum(PaymentMethod).optional(),
   notes: z.string().optional(),
   items: z.array(purchaseItemSchema).min(1),
 });
@@ -224,12 +251,20 @@ export const saleCreateSchema = z.object({
   warehouse_id: z.coerce.number().int().positive().optional(),
   sale_date: z.coerce.date().optional(),
   status: z.nativeEnum(SaleStatus).optional(),
+  payment_status: z.enum(["UNPAID", "PARTIALLY_PAID", "PAID"]).optional(),
+  amount_paid: z.coerce.number().nonnegative().optional(),
+  payment_date: z.coerce.date().optional(),
+  payment_method: z.nativeEnum(PaymentMethod).optional(),
   notes: z.string().optional(),
   items: z.array(saleItemSchema).min(1),
 });
 
 export const saleUpdateSchema = z.object({
   status: z.nativeEnum(SaleStatus).optional(),
+  payment_status: z.enum(["UNPAID", "PARTIALLY_PAID", "PAID"]).optional(),
+  amount_paid: z.coerce.number().nonnegative().optional(),
+  payment_date: z.coerce.date().optional(),
+  payment_method: z.nativeEnum(PaymentMethod).optional(),
   notes: z.string().optional(),
 });
 

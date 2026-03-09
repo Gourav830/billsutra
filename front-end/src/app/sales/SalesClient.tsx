@@ -18,6 +18,7 @@ import {
   useCreateCustomerMutation,
   useCreateSaleMutation,
   useCustomersQuery,
+  useDeleteSaleMutation,
   useProductsQuery,
   useSalesQuery,
   useUpdateSaleMutation,
@@ -48,11 +49,16 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
   const { data: warehouses } = useWarehousesQuery();
   const createSale = useCreateSaleMutation();
   const updateSale = useUpdateSaleMutation();
+  const deleteSale = useDeleteSaleMutation();
   const createCustomer = useCreateCustomerMutation();
   const [form, setForm] = useState({
     customer_id: "",
     warehouse_id: "",
     sale_date: "",
+    payment_status: "UNPAID",
+    amount_paid: "",
+    payment_date: "",
+    payment_method: "",
     notes: "",
   });
   const [items, setItems] = useState([
@@ -74,7 +80,17 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
   const [customerError, setCustomerError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingStatus, setEditingStatus] = useState("COMPLETED");
+  const [editingPaymentStatus, setEditingPaymentStatus] = useState("UNPAID");
+  const [editingAmountPaid, setEditingAmountPaid] = useState("0");
+  const [editingPaymentDate, setEditingPaymentDate] = useState("");
+  const [editingPaymentMethod, setEditingPaymentMethod] = useState("");
   const [editingNotes, setEditingNotes] = useState("");
+
+  const paymentStatusBadgeClass = (status: string) => {
+    if (status === "PAID") return "bg-emerald-100 text-emerald-700";
+    if (status === "PARTIALLY_PAID") return "bg-amber-100 text-amber-700";
+    return "bg-rose-100 text-rose-700";
+  };
 
   const sales = useMemo(() => data ?? [], [data]);
   const customerList = customers ?? [];
@@ -87,9 +103,23 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
     value: string,
   ) => {
     setItems((prev) =>
-      prev.map((item, idx) =>
-        idx === index ? { ...item, [key]: value } : item,
-      ),
+      prev.map((item, idx) => {
+        if (idx !== index) return item;
+
+        if (key === "product_id") {
+          const selectedProduct = productList.find(
+            (product) => String(product.id) === value,
+          );
+
+          return {
+            ...item,
+            product_id: value,
+            unit_price: selectedProduct?.price ?? item.unit_price,
+          };
+        }
+
+        return { ...item, [key]: value };
+      }),
     );
     setLineItemSummary([]);
     setLineItemErrors([]);
@@ -204,6 +234,21 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
         customer_id: form.customer_id ? Number(form.customer_id) : undefined,
         warehouse_id: form.warehouse_id ? Number(form.warehouse_id) : undefined,
         sale_date: form.sale_date || undefined,
+        payment_status: form.payment_status as
+          | "PAID"
+          | "PARTIALLY_PAID"
+          | "UNPAID",
+        amount_paid: form.amount_paid ? Number(form.amount_paid) : undefined,
+        payment_date: form.payment_date || undefined,
+        payment_method:
+          (form.payment_method as
+            | "CASH"
+            | "CARD"
+            | "BANK_TRANSFER"
+            | "UPI"
+            | "CHEQUE"
+            | "OTHER"
+            | "") || undefined,
         notes: form.notes.trim() || undefined,
         items: items.map((item) => ({
           product_id: Number(item.product_id),
@@ -216,6 +261,10 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
         customer_id: "",
         warehouse_id: "",
         sale_date: "",
+        payment_status: "UNPAID",
+        amount_paid: "",
+        payment_date: "",
+        payment_method: "",
         notes: "",
       });
       setItems([
@@ -254,23 +303,69 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
     }
   };
 
-  const handleEdit = (id: number, status: string, notes?: string | null) => {
-    setEditingId(id);
-    setEditingStatus(status);
-    setEditingNotes(notes ?? "");
+  const handleEdit = (sale: (typeof sales)[number]) => {
+    setEditingId(sale.id);
+    setEditingStatus(sale.status);
+    setEditingPaymentStatus(sale.paymentStatus ?? "UNPAID");
+    setEditingAmountPaid(String(sale.paidAmount ?? 0));
+    setEditingPaymentDate(
+      sale.paymentDate
+        ? new Date(sale.paymentDate).toISOString().slice(0, 10)
+        : "",
+    );
+    setEditingPaymentMethod(sale.paymentMethod ?? "");
+    setEditingNotes(sale.notes ?? "");
   };
 
   const handleUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!editingId) return;
-    await updateSale.mutateAsync({
-      id: editingId,
-      payload: {
-        status: editingStatus,
-        notes: editingNotes.trim() || undefined,
-      },
-    });
-    setEditingId(null);
+    try {
+      await updateSale.mutateAsync({
+        id: editingId,
+        payload: {
+          status: editingStatus,
+          payment_status: editingPaymentStatus as
+            | "PAID"
+            | "PARTIALLY_PAID"
+            | "UNPAID",
+          amount_paid: Number(editingAmountPaid || 0),
+          payment_date: editingPaymentDate || undefined,
+          payment_method:
+            (editingPaymentMethod as
+              | "CASH"
+              | "CARD"
+              | "BANK_TRANSFER"
+              | "UPI"
+              | "CHEQUE"
+              | "OTHER"
+              | "") || undefined,
+          notes: editingNotes.trim() || undefined,
+        },
+      });
+      setEditingId(null);
+      setServerError(null);
+    } catch (error) {
+      setServerError(
+        parseServerErrors(error, "Unable to update sale right now."),
+      );
+    }
+  };
+
+  const handleDeleteSale = async (saleId: number) => {
+    const confirmed = window.confirm(
+      "Delete this sale? Product stock will be restored.",
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteSale.mutateAsync(saleId);
+      setServerError(null);
+    } catch (error) {
+      setServerError(
+        parseServerErrors(error, "Unable to delete sale right now."),
+      );
+    }
   };
 
   return (
@@ -504,6 +599,76 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
                   placeholder="Invoice reference"
                 />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="payment_status">Payment status</Label>
+                <select
+                  id="payment_status"
+                  className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                  value={form.payment_status}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      payment_status: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="UNPAID">UNPAID</option>
+                  <option value="PARTIALLY_PAID">PARTIALLY PAID</option>
+                  <option value="PAID">PAID</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="amount_paid">Paid amount</Label>
+                <Input
+                  id="amount_paid"
+                  type="number"
+                  min="0"
+                  value={form.amount_paid}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      amount_paid: event.target.value,
+                    }))
+                  }
+                  placeholder="0"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="payment_date">Payment date</Label>
+                <Input
+                  id="payment_date"
+                  type="date"
+                  value={form.payment_date}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      payment_date: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="payment_method">Payment method</Label>
+                <select
+                  id="payment_method"
+                  className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                  value={form.payment_method}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      payment_method: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select method</option>
+                  <option value="CASH">CASH</option>
+                  <option value="CARD">CARD</option>
+                  <option value="BANK_TRANSFER">BANK TRANSFER</option>
+                  <option value="UPI">UPI</option>
+                  <option value="CHEQUE">CHEQUE</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </div>
 
               <div className="grid gap-3">
                 <div className="flex items-center justify-between">
@@ -681,6 +846,63 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
                             </select>
                           </div>
                           <div className="grid gap-2">
+                            <Label>Payment status</Label>
+                            <select
+                              className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                              value={editingPaymentStatus}
+                              onChange={(event) =>
+                                setEditingPaymentStatus(event.target.value)
+                              }
+                            >
+                              <option value="UNPAID">UNPAID</option>
+                              <option value="PARTIALLY_PAID">
+                                PARTIALLY PAID
+                              </option>
+                              <option value="PAID">PAID</option>
+                            </select>
+                          </div>
+                          <div className="grid gap-2">
+                            <Label>Paid amount</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={editingAmountPaid}
+                              onChange={(event) =>
+                                setEditingAmountPaid(event.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label>Payment date</Label>
+                            <Input
+                              type="date"
+                              value={editingPaymentDate}
+                              onChange={(event) =>
+                                setEditingPaymentDate(event.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label>Payment method</Label>
+                            <select
+                              className="h-9 w-full rounded-md border border-[#e4d6ca] bg-white px-3 text-sm"
+                              value={editingPaymentMethod}
+                              onChange={(event) =>
+                                setEditingPaymentMethod(event.target.value)
+                              }
+                            >
+                              <option value="">Select method</option>
+                              <option value="CASH">CASH</option>
+                              <option value="CARD">CARD</option>
+                              <option value="BANK_TRANSFER">
+                                BANK TRANSFER
+                              </option>
+                              <option value="UPI">UPI</option>
+                              <option value="CHEQUE">CHEQUE</option>
+                              <option value="OTHER">OTHER</option>
+                            </select>
+                          </div>
+                          <div className="grid gap-2">
                             <Label>Notes</Label>
                             <Input
                               value={editingNotes}
@@ -718,13 +940,36 @@ const SalesClient = ({ name, image }: SalesClientProps) => {
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-sm text-[#5c4b3b]">
                             <span>{sale.status}</span>
-                            <span>₹{Number(sale.total).toFixed(2)}</span>
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${paymentStatusBadgeClass(
+                                sale.paymentStatus,
+                              )}`}
+                            >
+                              {sale.paymentStatus.replace("_", " ")}
+                            </span>
+                            <span>
+                              Total ₹{Number(sale.totalAmount).toFixed(2)}
+                            </span>
+                            <span>
+                              Paid ₹{Number(sale.paidAmount).toFixed(2)}
+                            </span>
+                            <span>
+                              Pending ₹{Number(sale.pendingAmount).toFixed(2)}
+                            </span>
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={() => handleEdit(sale.id, sale.status)}
+                              onClick={() => handleEdit(sale)}
                             >
                               Edit
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => handleDeleteSale(sale.id)}
+                              disabled={deleteSale.isPending}
+                            >
+                              Delete
                             </Button>
                           </div>
                         </div>

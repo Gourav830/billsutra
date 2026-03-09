@@ -29,7 +29,10 @@ const CustomerInsights = () => {
           <>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { label: "Total customers", value: data.total },
+                {
+                  label: "Total Registered Customers",
+                  value: data.totalRegisteredCustomers,
+                },
                 { label: "Top customers", value: data.topCustomers.length },
                 { label: "Pending payments", value: data.pendingPayments },
               ].map((item) => (
@@ -48,7 +51,7 @@ const CustomerInsights = () => {
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
-                Top customers by revenue
+                Top 5 customers by total purchase amount
               </p>
               {data.topCustomers.length === 0 ? (
                 <p className="mt-3 text-sm text-[#8a6d56]">
@@ -56,21 +59,52 @@ const CustomerInsights = () => {
                 </p>
               ) : (
                 <div className="mt-3 grid gap-2">
-                  {data.topCustomers.slice(0, 5).map((customer) => (
+                  {data.topCustomers.map((customer) => (
                     <div
                       key={customer.name}
                       className="flex items-center justify-between rounded-xl border border-[#f2e6dc] bg-white px-4 py-3 text-sm"
                     >
-                      <span className="font-semibold text-[#1f1b16]">
-                        {customer.name}
-                      </span>
+                      <div>
+                        <p className="font-semibold text-[#1f1b16]">
+                          {customer.name}
+                        </p>
+                        <p className="text-xs text-[#8a6d56]">
+                          Orders: {customer.numberOfOrders}
+                        </p>
+                      </div>
                       <span className="text-[#5c4b3b]">
-                        {formatCurrency(customer.total)}
+                        {formatCurrency(customer.totalPurchaseAmount)}
                       </span>
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8a6d56]">
+                Daily / Weekly / Monthly customers
+              </p>
+              <div className="mt-3 grid gap-2">
+                {[
+                  { label: "Daily", value: data.customerVisits.daily },
+                  { label: "Weekly", value: data.customerVisits.weekly },
+                  { label: "Monthly", value: data.customerVisits.monthly },
+                ].map((period) => (
+                  <div
+                    key={period.label}
+                    className="rounded-xl border border-[#f2e6dc] bg-[#fff9f2] px-4 py-3 text-sm"
+                  >
+                    <p className="font-semibold text-[#1f1b16]">
+                      {period.label}
+                    </p>
+                    <p className="text-xs text-[#8a6d56]">
+                      Registered: {period.value.registeredCustomers} | Walk-in:{" "}
+                      {period.value.walkInCustomers} | Total:{" "}
+                      {period.value.totalCustomers}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}

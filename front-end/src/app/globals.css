@@ -126,6 +126,83 @@
 }
 
 @layer utilities {
+  .a4-preview-stack {
+    position: relative;
+    width: 100%;
+  }
+
+  .a4-preview-viewport {
+    width: 100%;
+  }
+
+  .a4-preview-pages {
+    display: grid;
+    gap: 12px;
+  }
+
+  .a4-preview-page-slot {
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .a4-page-frame {
+    transform-origin: top left;
+    overflow: hidden;
+    border: 1px solid #ddd6cf;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 16px 36px -28px rgba(15, 23, 42, 0.45);
+  }
+
+  .a4-page-content {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    padding: 28px;
+    background: #ffffff;
+  }
+
+  .a4-page-badge {
+    pointer-events: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    border: 1px solid #d9d2cb;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #7a6552;
+    padding: 4px 10px;
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    box-shadow: 0 6px 18px -14px rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(1px);
+  }
+
+  .a4-measure-layer {
+    pointer-events: none;
+    position: absolute;
+    left: -99999px;
+    top: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+  }
+
+  .invoice-content-root {
+    color: #1f1b16;
+  }
+
+  .invoice-section,
+  .invoice-row,
+  .invoice-row > * {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
   .page-fade-in {
     animation: pageFade 280ms ease-out;
   }
@@ -182,6 +259,17 @@
   .dark .border-\[\#f5d0b5\] {
     border-color: var(--border);
   }
+
+  .dark .a4-page-frame,
+  .dark .a4-page-content {
+    background: #ffffff;
+  }
+
+  .dark .a4-page-badge {
+    border-color: #d9d2cb;
+    background: rgba(255, 255, 255, 0.95);
+    color: #7a6552;
+  }
 }
 
 @media print {
@@ -210,5 +298,49 @@
     box-shadow: none !important;
     border: 1px solid #e5e0d8 !important;
     padding: 20px !important;
+  }
+
+  .a4-preview-pages {
+    gap: 0 !important;
+  }
+
+  .a4-preview-page-slot {
+    width: 210mm !important;
+    height: 297mm !important;
+    margin: 0 !important;
+  }
+
+  .a4-page-frame {
+    width: 210mm !important;
+    height: 297mm !important;
+    border: 1px solid #dfd8d1 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .a4-page-content {
+    padding: 12mm !important;
+  }
+
+  .invoice-page {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .invoice-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  table,
+  tr,
+  td,
+  th,
+  thead,
+  tbody,
+  tfoot {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

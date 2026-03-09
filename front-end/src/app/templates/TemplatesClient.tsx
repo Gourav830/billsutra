@@ -6,7 +6,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronDown, GripVertical } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import InvoiceRenderer from "@/components/invoice/InvoiceRenderer";
+import TemplatePreviewRenderer from "@/components/invoice/TemplatePreviewRenderer";
+import A4PreviewStack, {
+  A4_HEIGHT_PX,
+  A4_WIDTH_PX,
+} from "@/components/invoice/A4PreviewStack";
 import {
   DesignConfigProvider,
   createDesignConfig,
@@ -25,6 +29,7 @@ import type { SectionKey } from "@/types/invoice-template";
 import {
   createUserSavedTemplate,
   deleteUserSavedTemplate,
+  fetchBusinessProfile,
   fetchTemplates,
   fetchUserSavedTemplates,
   fetchUserTemplates,
@@ -34,7 +39,7 @@ import {
 import { calculateTotals } from "@/components/invoice/sections/utils";
 import { useInvoicePdf } from "@/hooks/invoice/useInvoicePdf";
 
-const MemoInvoiceRenderer = memo(InvoiceRenderer);
+const MemoTemplatePreview = memo(TemplatePreviewRenderer);
 
 const FONT_OPTIONS = [
   { label: "Geist Sans", value: "var(--font-geist-sans)" },
@@ -107,12 +112,6 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
   const [draggedSection, setDraggedSection] = useState<SectionKey | null>(null);
   const [draggedPreviewSection, setDraggedPreviewSection] =
     useState<SectionKey | null>(null);
-  const livePreviewRef = useRef<HTMLDivElement | null>(null);
-  const modalPreviewRef = useRef<HTMLDivElement | null>(null);
-  const [livePreviewScale, setLivePreviewScale] = useState(1);
-  const [modalPreviewScale, setModalPreviewScale] = useState(1);
-  const A4_WIDTH = 794;
-  const A4_HEIGHT = 1123;
   const [openBusinessType, setOpenBusinessType] = useState(true);
   const [openTemplateSelection, setOpenTemplateSelection] = useState(true);
   const [openCustomize, setOpenCustomize] = useState(true);
@@ -142,6 +141,11 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
   const { data: userSavedTemplates = [] } = useQuery({
     queryKey: ["user-saved-templates"],
     queryFn: fetchUserSavedTemplates,
+  });
+
+  const { data: businessProfile } = useQuery({
+    queryKey: ["business-profile"],
+    queryFn: fetchBusinessProfile,
   });
 
   const { downloadPdf } = useInvoicePdf();
@@ -303,44 +307,6 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
       setThemeColor(templates[0].theme.primaryColor);
     }
   }, [templates, selectedTemplateId]);
-
-  useEffect(() => {
-    const updateScale = (
-      target: HTMLDivElement | null,
-      setter: (value: number) => void,
-    ) => {
-      if (!target) return;
-      const width = target.clientWidth;
-      if (!width) return;
-      const scale = Math.min(1, width / A4_WIDTH);
-      setter(scale);
-    };
-
-    updateScale(livePreviewRef.current, setLivePreviewScale);
-    updateScale(modalPreviewRef.current, setModalPreviewScale);
-
-    const observer =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => {
-            updateScale(livePreviewRef.current, setLivePreviewScale);
-            updateScale(modalPreviewRef.current, setModalPreviewScale);
-          })
-        : null;
-
-    if (observer) {
-      if (livePreviewRef.current) observer.observe(livePreviewRef.current);
-      if (modalPreviewRef.current) observer.observe(modalPreviewRef.current);
-    } else {
-      const handleResize = () => {
-        updateScale(livePreviewRef.current, setLivePreviewScale);
-        updateScale(modalPreviewRef.current, setModalPreviewScale);
-      };
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }
-
-    return () => observer?.disconnect();
-  }, []);
 
   useEffect(() => {
     const templateIdNumber = Number(selectedTemplateId);
@@ -525,20 +491,48 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
       ...PREVIEW_INVOICE,
       business: {
         ...PREVIEW_INVOICE.business,
+        businessName:
+          businessProfile?.business_name ??
+          PREVIEW_INVOICE.business.businessName,
+        address: businessProfile?.address ?? PREVIEW_INVOICE.business.address,
+        phone: businessProfile?.phone ?? PREVIEW_INVOICE.business.phone,
+        email: businessProfile?.email ?? PREVIEW_INVOICE.business.email,
+        website: businessProfile?.website ?? PREVIEW_INVOICE.business.website,
+        logoUrl: businessProfile?.logo_url ?? PREVIEW_INVOICE.business.logoUrl,
+        taxId: businessProfile?.tax_id ?? PREVIEW_INVOICE.business.taxId,
+        currency:
+          businessProfile?.currency ?? PREVIEW_INVOICE.business.currency,
+        showTaxNumber:
+          businessProfile?.show_tax_number ??
+          PREVIEW_INVOICE.business.showTaxNumber,
         showLogoOnInvoice: showLogo,
       },
     };
-  }, [showLogo]);
+  }, [businessProfile, showLogo]);
 
   const modalPreviewData = useMemo(() => {
     return {
       ...PREVIEW_INVOICE,
       business: {
         ...PREVIEW_INVOICE.business,
+        businessName:
+          businessProfile?.business_name ??
+          PREVIEW_INVOICE.business.businessName,
+        address: businessProfile?.address ?? PREVIEW_INVOICE.business.address,
+        phone: businessProfile?.phone ?? PREVIEW_INVOICE.business.phone,
+        email: businessProfile?.email ?? PREVIEW_INVOICE.business.email,
+        website: businessProfile?.website ?? PREVIEW_INVOICE.business.website,
+        logoUrl: businessProfile?.logo_url ?? PREVIEW_INVOICE.business.logoUrl,
+        taxId: businessProfile?.tax_id ?? PREVIEW_INVOICE.business.taxId,
+        currency:
+          businessProfile?.currency ?? PREVIEW_INVOICE.business.currency,
+        showTaxNumber:
+          businessProfile?.show_tax_number ??
+          PREVIEW_INVOICE.business.showTaxNumber,
         showLogoOnInvoice: previewShowLogo,
       },
     };
-  }, [previewShowLogo]);
+  }, [businessProfile, previewShowLogo]);
 
   const buildPreviewPdfInput = () => {
     const totals = calculateTotals(modalPreviewData.items);
@@ -575,12 +569,26 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
       ...PREVIEW_INVOICE,
       business: {
         ...PREVIEW_INVOICE.business,
+        businessName:
+          businessProfile?.business_name ??
+          PREVIEW_INVOICE.business.businessName,
+        address: businessProfile?.address ?? PREVIEW_INVOICE.business.address,
+        phone: businessProfile?.phone ?? PREVIEW_INVOICE.business.phone,
+        email: businessProfile?.email ?? PREVIEW_INVOICE.business.email,
+        website: businessProfile?.website ?? PREVIEW_INVOICE.business.website,
+        logoUrl: businessProfile?.logo_url ?? PREVIEW_INVOICE.business.logoUrl,
+        taxId: businessProfile?.tax_id ?? PREVIEW_INVOICE.business.taxId,
+        currency:
+          businessProfile?.currency ?? PREVIEW_INVOICE.business.currency,
+        showTaxNumber:
+          businessProfile?.show_tax_number ??
+          PREVIEW_INVOICE.business.showTaxNumber,
         showLogoOnInvoice: false,
       },
       items: PREVIEW_INVOICE.items.slice(0, 1),
       notes: "",
     };
-  }, []);
+  }, [businessProfile]);
 
   const theme = useMemo(() => {
     return {
@@ -734,9 +742,20 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
     setPreviewShowLogo(false);
   };
 
-  const closePreview = () => {
+  const closePreview = useCallback(() => {
     setPreviewTemplateId(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!previewTemplate) return;
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closePreview();
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [closePreview, previewTemplate]);
 
   const handleSaveSettings = async () => {
     const templateIdNumber = Number(selectedTemplateId);
@@ -1428,30 +1447,23 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
               ) : null}
             </div>
             {openLivePreview ? (
-              <div className="mt-5 flex-1 overflow-auto rounded-3xl border border-border bg-muted/40 p-4">
-                <div
-                  ref={livePreviewRef}
-                  className="mx-auto w-full max-w-[520px]"
-                >
-                  <div
-                    className="mx-auto origin-top-left rounded-2xl border border-border bg-white shadow-sm"
-                    style={{
-                      width: A4_WIDTH,
-                      height: A4_HEIGHT,
-                      transform: `scale(${livePreviewScale})`,
-                    }}
-                  >
-                    <div className="h-full w-full p-6">
-                      <DesignConfigProvider value={designContextValue}>
-                        <MemoInvoiceRenderer
-                          data={previewData}
-                          enabledSections={enabledSections}
-                          sectionOrder={sectionOrder}
-                          theme={theme}
-                        />
-                      </DesignConfigProvider>
-                    </div>
-                  </div>
+              <div className="mt-5 flex-1 overflow-auto rounded-3xl border border-border bg-white p-3">
+                <div className="mx-auto w-full max-w-[520px]">
+                  <DesignConfigProvider value={designContextValue}>
+                    <A4PreviewStack
+                      className="w-full"
+                      stackKey={`templates-live-${selectedTemplate.id}-${enabledSections.join(",")}-${sectionOrder.join(",")}-${theme.primaryColor}`}
+                    >
+                      <MemoTemplatePreview
+                        key={`live-${selectedTemplate.id}-${enabledSections.join(",")}-${sectionOrder.join(",")}`}
+                        templateId={selectedTemplate.id}
+                        data={previewData}
+                        enabledSections={enabledSections}
+                        sectionOrder={sectionOrder}
+                        theme={theme}
+                      />
+                    </A4PreviewStack>
+                  </DesignConfigProvider>
                 </div>
               </div>
             ) : null}
@@ -1587,11 +1599,11 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
                     Featured
                   </p>
-                  <div className="mt-3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="mt-3 grid justify-items-center gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {featuredTemplates.map((template) => (
                       <div
                         key={`featured-${template.id}`}
-                        className={`rounded-2xl border px-4 py-4 text-left transition ${
+                        className={`w-full max-w-[430px] rounded-2xl border px-4 py-4 text-left transition ${
                           selectedTemplateId === template.id
                             ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
@@ -1618,17 +1630,19 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                             </span>
                           ) : null}
                         </div>
-                        <div className="mt-4 h-60 overflow-hidden rounded-2xl border border-[#f1e6da] bg-muted/40 p-3">
+                        <div className="mt-4 h-60 overflow-hidden rounded-xl border border-border bg-white p-2">
                           <div
                             className="pointer-events-none origin-top-left"
                             style={{
-                              width: A4_WIDTH,
-                              height: A4_HEIGHT,
+                              width: A4_WIDTH_PX,
+                              height: A4_HEIGHT_PX,
                               transform: "scale(0.26)",
                             }}
                           >
-                            <div className="h-full w-full rounded-2xl border border-border bg-white p-4">
-                              <MemoInvoiceRenderer
+                            <div className="h-full w-full bg-white p-4">
+                              <MemoTemplatePreview
+                                key={`featured-${template.id}`}
+                                templateId={template.id}
                                 data={cardPreviewData}
                                 enabledSections={template.defaultSections}
                                 sectionOrder={template.sectionOrder}
@@ -1662,11 +1676,11 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
                   All templates
                 </p>
-                <div className="mt-3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-3 grid justify-items-center gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {regularTemplates.map((template) => (
                     <div
                       key={`all-${template.id}`}
-                      className={`rounded-2xl border px-4 py-4 text-left transition ${
+                      className={`w-full max-w-[430px] rounded-2xl border px-4 py-4 text-left transition ${
                         selectedTemplateId === template.id
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
@@ -1693,17 +1707,19 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                           </span>
                         ) : null}
                       </div>
-                      <div className="mt-4 h-60 overflow-hidden rounded-2xl border border-[#f1e6da] bg-muted/40 p-3">
+                      <div className="mt-4 h-60 overflow-hidden rounded-xl border border-border bg-white p-2">
                         <div
                           className="pointer-events-none origin-top-left"
                           style={{
-                            width: A4_WIDTH,
-                            height: A4_HEIGHT,
+                            width: A4_WIDTH_PX,
+                            height: A4_HEIGHT_PX,
                             transform: "scale(0.26)",
                           }}
                         >
-                          <div className="h-full w-full rounded-2xl border border-border bg-white p-4">
-                            <MemoInvoiceRenderer
+                          <div className="h-full w-full bg-white p-4">
+                            <MemoTemplatePreview
+                              key={`all-${template.id}`}
+                              templateId={template.id}
                               data={cardPreviewData}
                               enabledSections={template.defaultSections}
                               sectionOrder={template.sectionOrder}
@@ -1737,7 +1753,14 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
         </section>
       </div>
       {previewTemplate ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closePreview();
+            }
+          }}
+        >
           <div className="flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white text-[#1f1b16] shadow-2xl">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-4">
               <div>
@@ -1885,30 +1908,22 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
                 </div>
               </div>
               <div className="rounded-2xl border border-border bg-white p-4">
-                <div className="rounded-2xl border border-border bg-muted/40 p-4">
-                  <div
-                    ref={modalPreviewRef}
-                    className="mx-auto w-full max-w-[820px]"
-                  >
-                    <div
-                      className="mx-auto origin-top-left rounded-2xl border border-border bg-white shadow-sm"
-                      style={{
-                        width: A4_WIDTH,
-                        height: A4_HEIGHT,
-                        transform: `scale(${modalPreviewScale})`,
-                      }}
-                    >
-                      <div className="h-full w-full p-6">
-                        <DesignConfigProvider value={designContextValue}>
-                          <MemoInvoiceRenderer
-                            data={modalPreviewData}
-                            enabledSections={previewEnabledSections}
-                            sectionOrder={previewSectionOrder}
-                            theme={previewTheme}
-                          />
-                        </DesignConfigProvider>
-                      </div>
-                    </div>
+                <div className="rounded-2xl border border-border bg-white p-2.5">
+                  <div className="mx-auto w-full max-w-[820px]">
+                    <DesignConfigProvider value={designContextValue}>
+                      <A4PreviewStack
+                        stackKey={`templates-modal-${previewTemplate.id}-${previewEnabledSections.join(",")}-${previewSectionOrder.join(",")}-${previewThemeColor}-${previewShowLogo}`}
+                      >
+                        <MemoTemplatePreview
+                          key={`modal-${previewTemplate.id}-${previewEnabledSections.join(",")}-${previewSectionOrder.join(",")}-${previewThemeColor}-${previewShowLogo}`}
+                          templateId={previewTemplate.id}
+                          data={modalPreviewData}
+                          enabledSections={previewEnabledSections}
+                          sectionOrder={previewSectionOrder}
+                          theme={previewTheme}
+                        />
+                      </A4PreviewStack>
+                    </DesignConfigProvider>
                   </div>
                 </div>
               </div>
@@ -1921,4 +1936,3 @@ const TemplatesClient = ({ name, image }: { name: string; image?: string }) => {
 };
 
 export default TemplatesClient;
-

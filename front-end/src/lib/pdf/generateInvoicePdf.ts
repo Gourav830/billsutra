@@ -30,12 +30,34 @@ export const generateInvoicePdf = ({
     format: "a4",
   });
 
-  const startX = 14;
-  let cursorY = 18;
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const marginX = 12;
+  const marginY = 12;
+  const contentWidth = pageWidth - marginX * 2;
+  const bottomSafeY = pageHeight - marginY - 8;
+
+  const startX = marginX;
+  let cursorY = marginY + 6;
   const accent = hexToRgb(themeColor) ?? [138, 109, 86];
   const text: [number, number, number] = [31, 27, 22];
   const soft: [number, number, number] = [249, 242, 234];
   const softAlt: [number, number, number] = [255, 250, 245];
+
+  const drawPageFrame = () => {
+    pdf.setDrawColor(224, 217, 209);
+    pdf.setLineWidth(0.2);
+    pdf.rect(marginX, marginY, contentWidth, pageHeight - marginY * 2);
+  };
+
+  const ensureSpace = (neededHeight: number) => {
+    if (cursorY + neededHeight <= bottomSafeY) return;
+    pdf.addPage();
+    drawPageFrame();
+    cursorY = marginY + 6;
+  };
+
+  drawPageFrame();
 
   pdf.setFontSize(16);
   pdf.setTextColor(...text);
@@ -59,6 +81,7 @@ export const generateInvoicePdf = ({
   const tableStart = cursorY + 30;
   autoTable(pdf, {
     startY: tableStart,
+    margin: { left: marginX, right: marginX },
     head: [["Item", "Qty", "Price", "GST %", "Line Total"]],
     body: items.map((item) => [
       item.name,
@@ -70,6 +93,9 @@ export const generateInvoicePdf = ({
     styles: { fontSize: 9, textColor: text, cellPadding: 3 },
     headStyles: { fillColor: soft, textColor: accent, fontStyle: "bold" },
     alternateRowStyles: { fillColor: softAlt },
+    showHead: "everyPage",
+    pageBreak: "auto",
+    rowPageBreak: "avoid",
     tableLineColor: [231, 220, 208],
     columnStyles: {
       1: { halign: "right" },
@@ -80,9 +106,11 @@ export const generateInvoicePdf = ({
   });
 
   const afterTable = pdf.lastAutoTable?.finalY;
-  const totalsY = (afterTable ?? tableStart) + 8;
-  const labelX = 130;
-  const valueX = 190;
+  cursorY = (afterTable ?? tableStart) + 8;
+  ensureSpace(44);
+  const totalsY = cursorY;
+  const labelX = pageWidth - marginX - 60;
+  const valueX = pageWidth - marginX;
 
   pdf.setFontSize(10);
   pdf.setTextColor(...accent);
@@ -123,6 +151,22 @@ export const generateInvoicePdf = ({
   pdf.text(formatCurrency(totals.total), valueX, totalY, {
     align: "right",
   });
+
+  const pageCount = pdf.getNumberOfPages();
+  for (let page = 1; page <= pageCount; page += 1) {
+    pdf.setPage(page);
+    drawPageFrame();
+    pdf.setFontSize(9);
+    pdf.setTextColor(120, 105, 90);
+    pdf.text(
+      `Page ${page} / ${pageCount}`,
+      pageWidth - marginX,
+      pageHeight - 6,
+      {
+        align: "right",
+      },
+    );
+  }
 
   pdf.save(fileName);
 };

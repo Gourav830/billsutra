@@ -7,7 +7,10 @@ const ItemsTable = ({ data, theme }: InvoiceSectionProps) => {
   const totals = calculateTotals(data.items);
 
   return (
-    <section className="border border-slate-400 bg-white" style={style}>
+    <section
+      className="invoice-section border border-slate-400 bg-white"
+      style={style}
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="px-2 pt-2 text-[0.82em] font-semibold uppercase tracking-[0.12em]">
           Line items
@@ -42,7 +45,7 @@ const ItemsTable = ({ data, theme }: InvoiceSectionProps) => {
               const lineTotal = item.quantity * item.unitPrice;
               const taxAmount = lineTotal * ((item.taxRate ?? 0) / 100);
               return (
-                <tr key={item.name}>
+                <tr key={item.name} className="invoice-row">
                   <td className="border-b border-r border-slate-200 px-3 py-2">
                     <p className="font-medium">{item.name}</p>
                     {item.description ? (

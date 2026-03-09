@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import InvoiceRenderer from "@/components/invoice/InvoiceRenderer";
+import TemplatePreviewRenderer from "@/components/invoice/TemplatePreviewRenderer";
+import A4PreviewStack from "@/components/invoice/A4PreviewStack";
 import {
   BUSINESS_TYPES,
   SECTION_LABELS,
@@ -438,12 +439,18 @@ const BusinessProfileClient = ({
             <p className="mt-2 text-xs text-[#8a6d56]">
               Matches the selected template and business profile.
             </p>
-            <div className="mt-5">
-              <InvoiceRenderer
-                data={previewData}
-                enabledSections={enabledSections}
-                theme={selectedTemplate.theme}
-              />
+            <div className="mt-5 rounded-2xl border border-border bg-white p-2.5">
+              <A4PreviewStack
+                stackKey={`business-profile-${selectedTemplate.id}-${enabledSections.join(",")}`}
+              >
+                <TemplatePreviewRenderer
+                  key={`${selectedTemplate.id}-${enabledSections.join(",")}`}
+                  templateId={selectedTemplate.id}
+                  data={previewData}
+                  enabledSections={enabledSections}
+                  theme={selectedTemplate.theme}
+                />
+              </A4PreviewStack>
             </div>
           </section>
         </div>

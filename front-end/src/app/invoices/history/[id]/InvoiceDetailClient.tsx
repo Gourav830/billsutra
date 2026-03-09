@@ -82,10 +82,10 @@ const InvoiceDetailClient = ({ name, image }: InvoiceDetailClientProps) => {
 
     const startX = 14;
     let cursorY = 18;
-    const accent = [138, 109, 86] as const;
-    const text = [31, 27, 22] as const;
-    const soft = [249, 242, 234] as const;
-    const softAlt = [255, 250, 245] as const;
+    const accent: [number, number, number] = [138, 109, 86];
+    const text: [number, number, number] = [31, 27, 22];
+    const soft: [number, number, number] = [249, 242, 234];
+    const softAlt: [number, number, number] = [255, 250, 245];
 
     pdf.setFontSize(16);
     pdf.setTextColor(...text);

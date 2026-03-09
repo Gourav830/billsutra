@@ -7,7 +7,8 @@ import axios from "axios";
 import { toast } from "sonner";
 import Link from "next/link";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import InvoiceRenderer from "@/components/invoice/InvoiceRenderer";
+import TemplatePreviewRenderer from "@/components/invoice/TemplatePreviewRenderer";
+import A4PreviewStack from "@/components/invoice/A4PreviewStack";
 import InvoiceForm from "@/components/invoice/InvoiceForm";
 import InvoiceTable from "@/components/invoice/InvoiceTable";
 import InvoiceHeader from "@/components/invoice/InvoiceHeader";
@@ -743,12 +744,20 @@ const InvoiceClient = ({ name, image }: InvoiceClientProps) => {
                   resetAll: () => {},
                 }}
               >
-                <InvoiceRenderer
-                  data={invoicePreviewData}
-                  enabledSections={activeEnabledSections}
-                  sectionOrder={activeSectionOrder}
-                  theme={activeTheme}
-                />
+                <div className="rounded-xl border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-700 print:border-0 print:bg-transparent print:p-0 print:shadow-none">
+                  <A4PreviewStack
+                    stackKey={`invoices-preview-${selectedTemplate.id}-${activeSectionOrder.join(",")}-${activeEnabledSections.join(",")}-${activeTheme.primaryColor}`}
+                  >
+                    <TemplatePreviewRenderer
+                      key={`${selectedTemplate.id}-${activeSectionOrder.join(",")}-${activeEnabledSections.join(",")}`}
+                      templateId={selectedTemplate.id}
+                      data={invoicePreviewData}
+                      enabledSections={activeEnabledSections}
+                      sectionOrder={activeSectionOrder}
+                      theme={activeTheme}
+                    />
+                  </A4PreviewStack>
+                </div>
               </DesignConfigProvider>
             </div>
 

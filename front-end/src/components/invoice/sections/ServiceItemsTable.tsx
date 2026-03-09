@@ -7,7 +7,10 @@ const ServiceItemsTable = ({ data, theme }: InvoiceSectionProps) => {
   const totals = calculateTotals(data.items);
 
   return (
-    <section className="border border-slate-400 bg-white" style={style}>
+    <section
+      className="invoice-section border border-slate-400 bg-white"
+      style={style}
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="px-2 pt-2 text-[0.82em] font-semibold uppercase tracking-[0.12em]">
           Service items
@@ -23,7 +26,7 @@ const ServiceItemsTable = ({ data, theme }: InvoiceSectionProps) => {
           return (
             <div
               key={item.name}
-              className="border-b border-slate-300 px-3 py-2"
+              className="invoice-row border-b border-slate-300 px-3 py-2"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>

@@ -49,6 +49,16 @@ const percentChange = (current: number, previous: number) => {
   return ((current - previous) / previous) * 100;
 };
 
+type CashInflowMode = "sales" | "payments" | "hybrid";
+
+const resolveCashInflowMode = (value: unknown): CashInflowMode => {
+  if (typeof value !== "string") return "sales";
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "payments") return "payments";
+  if (normalized === "hybrid") return "hybrid";
+  return "sales";
+};
+
 class DashboardController {
   static async overview(req: Request, res: Response) {
     const userId = req.user?.id;
@@ -827,31 +837,55 @@ class DashboardController {
 
     const now = new Date();
     const start30 = startOfDayUtc(addDays(now, -29));
+    const inflowMode = resolveCashInflowMode(
+      req.query.inflowMode ?? process.env.DASHBOARD_CASHFLOW_INFLOW_MODE,
+    );
 
-    const [salesCollections, purchases, dailyExpenses] = await Promise.all([
-      prisma.sale.findMany({
-        where: {
-          user_id: userId,
-          paidAmount: { gt: 0 },
-          OR: [
-            { paymentDate: { gte: start30 } },
-            { paymentDate: null, sale_date: { gte: start30 } },
-          ],
-        },
-        select: { sale_date: true, paymentDate: true, paidAmount: true },
-      }),
-      prisma.purchase.findMany({
-        where: { user_id: userId, purchase_date: { gte: start30 } },
-        select: { purchase_date: true, paymentDate: true, paidAmount: true },
-      }),
-      getDailyExpenses({ userId, from: start30 }),
-    ]);
+    const [salesCollections, invoicePayments, purchases, dailyExpenses] =
+      await Promise.all([
+        prisma.sale.findMany({
+          where: {
+            user_id: userId,
+            paidAmount: { gt: 0 },
+            OR: [
+              { paymentDate: { gte: start30 } },
+              { paymentDate: null, sale_date: { gte: start30 } },
+            ],
+          },
+          select: { sale_date: true, paymentDate: true, paidAmount: true },
+        }),
+        prisma.payment.findMany({
+          where: { user_id: userId, paid_at: { gte: start30 } },
+          select: { paid_at: true, amount: true },
+        }),
+        prisma.purchase.findMany({
+          where: { user_id: userId, purchase_date: { gte: start30 } },
+          select: { purchase_date: true, paymentDate: true, paidAmount: true },
+        }),
+        getDailyExpenses({ userId, from: start30 }),
+      ]);
 
     const inflowMap = new Map<string, number>();
-    salesCollections.forEach((sale) => {
-      const key = toDateKey(sale.paymentDate ?? sale.sale_date);
-      inflowMap.set(key, (inflowMap.get(key) ?? 0) + toNumber(sale.paidAmount));
-    });
+
+    if (inflowMode === "sales" || inflowMode === "hybrid") {
+      salesCollections.forEach((sale) => {
+        const key = toDateKey(sale.paymentDate ?? sale.sale_date);
+        inflowMap.set(
+          key,
+          (inflowMap.get(key) ?? 0) + toNumber(sale.paidAmount),
+        );
+      });
+    }
+
+    if (inflowMode === "payments" || inflowMode === "hybrid") {
+      invoicePayments.forEach((payment) => {
+        const key = toDateKey(payment.paid_at);
+        inflowMap.set(
+          key,
+          (inflowMap.get(key) ?? 0) + toNumber(payment.amount),
+        );
+      });
+    }
 
     const outflowMap = new Map<string, number>();
     purchases.forEach((purchase) => {
@@ -878,6 +912,7 @@ class DashboardController {
 
     return sendResponse(res, 200, {
       data: {
+        inflowSourceMode: inflowMode,
         inflow,
         outflow,
         netCashFlow: inflow - outflow,

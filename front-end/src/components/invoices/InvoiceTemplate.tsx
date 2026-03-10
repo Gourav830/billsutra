@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type {
   InvoiceTemplateItem,
   InvoiceTemplateTotals,
   TaxMode,
 } from "@/types/invoice";
+import { getBusinessLogo } from "@/lib/businessLogo";
 
 export type InvoiceTemplateProps = {
   logoUrl?: string;
@@ -19,7 +20,7 @@ export type InvoiceTemplateProps = {
   gstMode: TaxMode;
 };
 
-const formatCurrency = (value: number) => `â‚¹${value.toFixed(2)}`;
+const formatCurrency = (value: number) => `₹${value.toFixed(2)}`;
 
 const InvoiceTemplate = ({
   logoUrl,
@@ -34,14 +35,19 @@ const InvoiceTemplate = ({
   totals,
   gstMode,
 }: InvoiceTemplateProps) => {
+  // Defer localStorage read to useEffect to avoid SSR/client hydration mismatch
+  const [storedLogo, setStoredLogo] = useState<string | null>(null);
+  useEffect(() => { setStoredLogo(getBusinessLogo()); }, []);
+  const effectiveLogo = logoUrl || storedLogo;
+
   return (
     <div className="invoice-sheet rounded-3xl border border-[#e8d9cc] bg-white p-8 text-[#1f1b16] shadow-[0_24px_60px_-40px_rgba(92,75,59,0.6)]">
       <div className="flex flex-wrap items-start justify-between gap-6 border-b border-[#f0e2d6] pb-6">
         <div className="flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#f2e6dc] bg-[#fff7ef] text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6d56]">
-            {logoUrl ? (
+            {effectiveLogo ? (
               <img
-                src={logoUrl}
+                src={effectiveLogo}
                 alt={`${businessName} logo`}
                 className="h-12 w-12 object-contain"
               />

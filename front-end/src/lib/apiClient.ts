@@ -994,4 +994,42 @@ export const saveBusinessProfile = async (payload: {
   return response.data.data as BusinessProfileRecord;
 };
 
+// ── Logo management ──────────────────────────────────────────────────────────
+
+/** Fetch the current logo URL */
+export const fetchLogoUrl = async (): Promise<string | null> => {
+  const response = await apiClient.get("/logo");
+  return (response.data?.data?.logo_url as string | null) ?? null;
+};
+
+/** Upload a logo for the first time (409 if one already exists → use replaceLogo). */
+export const uploadLogo = async (
+  file: File,
+): Promise<{ logo_url: string }> => {
+  const form = new FormData();
+  form.append("logo", file);
+  const response = await apiClient.post("/logo", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data.data as { logo_url: string };
+};
+
+/** Replace the existing logo with a new file. */
+export const replaceLogo = async (
+  file: File,
+): Promise<{ logo_url: string }> => {
+  const form = new FormData();
+  form.append("logo", file);
+  const response = await apiClient.put("/logo", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data.data as { logo_url: string };
+};
+
+/** Delete the current logo. */
+export const removeLogo = async (): Promise<void> => {
+  await apiClient.delete("/logo");
+};
+
 export default apiClient;
+

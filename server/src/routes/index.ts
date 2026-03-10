@@ -18,7 +18,9 @@ import TemplatesController from "../controllers/TemplatesController.js";
 import UserTemplateController from "../controllers/UserTemplateController.js";
 import UserSavedTemplateController from "../controllers/UserSavedTemplateController.js";
 import PublicInvoiceController from "../controllers/PublicInvoiceController.js";
+import LogoController from "../controllers/LogoController.js";
 import AuthMiddleware from "../middlewares/AuthMIddleware.js";
+import { logoUploadMiddleware } from "../middlewares/logo.upload.js";
 import { authRateLimiter } from "../middlewares/rateLimit.middleware.js";
 import validate from "../middlewares/validate.js";
 import {
@@ -149,6 +151,12 @@ router.post(
   validate({ body: businessProfileUpsertSchema }),
   BusinessProfileController.store,
 );
+
+// Logo management
+router.get("/logo", AuthMiddleware, LogoController.get);
+router.post("/logo", AuthMiddleware, logoUploadMiddleware, LogoController.upload);
+router.put("/logo", AuthMiddleware, logoUploadMiddleware, LogoController.update);
+router.delete("/logo", AuthMiddleware, LogoController.remove);
 
 // Templates
 router.get("/templates", AuthMiddleware, TemplatesController.index);

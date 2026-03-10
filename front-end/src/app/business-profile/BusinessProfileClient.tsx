@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TemplatePreviewRenderer from "@/components/invoice/TemplatePreviewRenderer";
 import A4PreviewStack from "@/components/invoice/A4PreviewStack";
+import LogoUploader from "@/components/business-profile/LogoUploader";
 import {
   BUSINESS_TYPES,
   SECTION_LABELS,
@@ -329,16 +330,12 @@ const BusinessProfileClient = ({
                       className="mt-2 w-full rounded-xl border border-border px-3 py-2"
                     />
                   </label>
-                  <label className="text-sm">
-                    Logo URL
-                    <input
-                      value={profile.logoUrl}
-                      onChange={(event) =>
-                        updateProfile("logoUrl", event.target.value)
-                      }
-                      className="mt-2 w-full rounded-xl border border-border px-3 py-2"
-                    />
-                  </label>
+                  <div className="sm:col-span-2">
+                    {/* Logo is stored in localStorage via the hook inside LogoUploader.
+                        We intentionally do NOT pipe the Base64 into profile.logoUrl
+                        to avoid sending a multi-MB payload to the server API. */}
+                    <LogoUploader />
+                  </div>
                   <label className="text-sm">
                     Tax ID / GSTIN
                     <input

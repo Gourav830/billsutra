@@ -2,8 +2,13 @@ import express from "express";
 import type { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import morgan from "morgan";
+import path from "path";
+import { fileURLToPath } from "url";
 import AppError from "./utils/AppError.js";
 import errorMiddleware from "./middlewares/error.middleware.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app: Application = express();
 
@@ -12,6 +17,13 @@ app.use(morgan(":method :url :status :response-time[0]ms"));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve uploaded files (logos, etc.) as static assets.
+// URL pattern: GET /uploads/logos/<userId>/<filename>
+app.use(
+  "/uploads",
+  express.static(path.resolve(__dirname, "../../uploads")),
+);
 
 app.get("/", (_req: Request, res: Response) => {
   return res.send("It's working ....");

@@ -6,6 +6,7 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { dashboardNavItems } from "./dashboard-nav";
+import { useBusinessLogo } from "@/hooks/useBusinessLogo";
 
 type AppSidebarProps = {
   collapsed: boolean;
@@ -16,12 +17,19 @@ type AppSidebarProps = {
 
 const SidebarContent = ({ collapsed }: { collapsed: boolean }) => {
   const pathname = usePathname();
+  const { logo } = useBusinessLogo();
 
   return (
     <div className="flex h-full flex-col gap-6 p-3">
       <div className="flex h-11 items-center rounded-xl bg-indigo-600 px-3 text-white shadow-md">
-        <div className="grid h-7 w-7 place-items-center rounded-lg bg-white/20 text-xs font-bold">
-          BS
+        <div className="grid h-7 w-7 place-items-center rounded-lg bg-white/20 text-xs font-bold overflow-hidden">
+          {/* Show uploaded business logo, or fallback to "BS" text */}
+          {logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logo} alt="Business logo" className="h-6 w-6 object-contain" />
+          ) : (
+            "BS"
+          )}
         </div>
         {!collapsed && (
           <span className="ml-3 text-sm font-semibold">BillSutra</span>
